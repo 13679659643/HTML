@@ -1,6 +1,22 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+  <script>
+  (function() {
+    // 设置密码
+    const PASSWORD = '010910';
+    
+    // 检查是否已经验证过（sessionStorage 关闭页面后失效）
+    if (sessionStorage.getItem('auth') !== 'ok') {
+      const input = prompt('请输入访问密码：');
+      if (input !== PASSWORD) {
+        document.body.innerHTML = '<h1>访问被拒绝</h1>';
+        throw new Error('Access denied');
+      }
+      sessionStorage.setItem('auth', 'ok');
+    }
+  })();
+</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI 智能总结 PPT 生成器</title>
