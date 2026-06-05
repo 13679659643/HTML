@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ai-ppt-generator-gt",
+  "compatibility_date": "2026-06-05",
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "ai-ppt-generator"
+  },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ]
+}
