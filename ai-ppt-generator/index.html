@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 智能总结 PPT 生成器</title>
+  <!-- 外部依赖库 -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>        <!-- Excel 解析 -->
+  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>    <!-- Word 解析 -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>          <!-- ZIP/PPTX 解析 -->
+  <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script> <!-- PPT 生成 -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>                     <!-- Markdown 渲染 -->
+  <style>
+    :root{--primary:#6366f1;--primary-dark:#4f46e5;--primary-light:#a5b4fc;--accent:#f59e0b;--bg:#0f172a;--bg-card:#1e293b;--bg-card2:#334155;--text:#f1f5f9;--text-muted:#94a3b8;--border:#475569;--success:#22c55e;--error:#ef4444;--radius:16px}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+    body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 20% 50%,rgba(99,102,241,.08) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(245,158,11,.06) 0%,transparent 50%),radial-gradient(ellipse at 50% 80%,rgba(34,197,94,.05) 0%,transparent 50%);animation:bgMove 20s ease-in-out infinite;z-index:-1}
+    @keyframes bgMove{0%,100%{transform:translate(0,0)}50%{transform:translate(-2%,-1%)}}
+    .container{max-width:960px;margin:0 auto;padding:40px 24px 60px}
+    header{text-align:center;margin-bottom:48px}
+    header h1{font-size:2.5rem;font-weight:800;background:linear-gradient(135deg,var(--primary-light),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px}
+    header p{color:var(--text-muted);font-size:1.1rem}
+    .api-bar{display:flex;gap:12px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
+    .api-bar label{font-weight:600;white-space:nowrap;color:var(--text-muted);font-size:.95rem}
+    .api-bar select{padding:12px 16px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:.95rem;outline:none;cursor:pointer;min-width:180px;transition:border-color .3s}
+    .api-bar select:focus{border-color:var(--primary)}
+    .api-bar select option{background:var(--bg-card);color:var(--text)}
+    .api-bar input[type="password"],.api-bar input.api-input{flex:1;min-width:200px;padding:12px 16px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:.95rem;outline:none;transition:border-color .3s}
+    .api-bar input:focus{border-color:var(--primary)}
+    .provider-info{font-size:.8rem;color:var(--text-muted);opacity:.7;margin-top:-4px;margin-bottom:16px;padding-left:4px}
+    .custom-config{display:none;gap:12px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
+    .custom-config.show{display:flex}
+    .custom-config label{font-weight:600;white-space:nowrap;color:var(--text-muted);font-size:.85rem}
+    .custom-config input{flex:1;min-width:180px;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:.9rem;outline:none;transition:border-color .3s}
+    .custom-config input:focus{border-color:var(--primary)}
+    /* CORS 代理配置行 */
+    .proxy-row{display:flex;gap:12px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
+    .proxy-row label{font-weight:600;white-space:nowrap;color:var(--text-muted);font-size:.85rem}
+    .proxy-row input{flex:1;min-width:200px;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:.9rem;outline:none;transition:border-color .3s}
+    .proxy-row input:focus{border-color:var(--primary)}
+    .proxy-hint{font-size:.75rem;color:var(--accent);margin-top:-8px;margin-bottom:12px;padding-left:4px}
+    .options-row{display:flex;gap:24px;margin-bottom:28px;align-items:center;flex-wrap:wrap}
+    .option-group{display:flex;align-items:center;gap:10px}
+    .option-group label{font-weight:600;white-space:nowrap;color:var(--text-muted);font-size:.95rem}
+    .style-cards{display:flex;gap:10px;flex-wrap:wrap}
+    .style-card{padding:8px 16px;border-radius:10px;border:2px solid var(--border);background:var(--bg-card);cursor:pointer;transition:all .3s;display:flex;align-items:center;gap:8px;font-size:.9rem;color:var(--text-muted)}
+    .style-card:hover{border-color:var(--primary)}
+    .style-card.active{border-color:var(--primary);background:rgba(99,102,241,.15);color:var(--text)}
+    .style-dot{width:14px;height:14px;border-radius:50%;display:inline-block}
+    .card{background:var(--bg-card);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);padding:32px;margin-bottom:28px;backdrop-filter:blur(12px);box-shadow:0 4px 24px rgba(0,0,0,.2);transition:transform .2s,box-shadow .2s}
+    .card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.3)}
+    .card-title{font-size:1.2rem;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+    .card-title .icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+    textarea{width:100%;min-height:200px;padding:16px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:1rem;line-height:1.7;resize:vertical;outline:none;transition:border-color .3s;font-family:inherit}
+    textarea:focus{border-color:var(--primary)}
+    textarea::placeholder{color:var(--text-muted)}
+    .upload-zone{border:2px dashed var(--border);border-radius:12px;padding:40px 24px;text-align:center;cursor:pointer;transition:all .3s;margin-top:16px;position:relative}
+    .upload-zone:hover,.upload-zone.dragover{border-color:var(--primary);background:rgba(99,102,241,.05)}
+    .upload-zone .upload-icon{font-size:2.5rem;margin-bottom:12px}
+    .upload-zone p{color:var(--text-muted)}
+    .upload-zone .formats{font-size:.85rem;color:var(--text-muted);margin-top:8px;opacity:.7}
+    .upload-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}
+    .file-list{margin-top:16px;display:flex;flex-wrap:wrap;gap:10px}
+    .file-tag{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--bg-card2);border-radius:8px;font-size:.9rem;animation:fadeIn .3s ease}
+    .file-tag .remove{cursor:pointer;color:var(--error);font-weight:bold;margin-left:4px}
+    .btn-row{display:flex;gap:16px;margin-top:8px;flex-wrap:wrap}
+    .btn{padding:14px 36px;border:none;border-radius:12px;font-size:1.05rem;font-weight:700;cursor:pointer;transition:all .3s;display:inline-flex;align-items:center;gap:8px}
+    .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;box-shadow:0 4px 16px rgba(99,102,241,.3)}
+    .btn-primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 24px rgba(99,102,241,.4)}
+    .btn-success{background:linear-gradient(135deg,var(--success),#16a34a);color:#fff;box-shadow:0 4px 16px rgba(34,197,94,.3)}
+    .btn-success:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 24px rgba(34,197,94,.4)}
+    .btn-accent{background:linear-gradient(135deg,var(--accent),#d97706);color:#fff;box-shadow:0 4px 16px rgba(245,158,11,.3)}
+    .btn-accent:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 24px rgba(245,158,11,.4)}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .progress-area{margin-top:24px;display:none}
+    .progress-area.show{display:block}
+    .progress-bar-bg{width:100%;height:6px;background:var(--bg-card2);border-radius:3px;overflow:hidden}
+    .progress-bar{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:3px;transition:width .4s ease;width:0%}
+    .progress-text{margin-top:10px;font-size:.9rem;color:var(--text-muted)}
+    .error-detail{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:16px;margin-top:12px;font-size:.85rem;color:#fca5a5;white-space:pre-wrap;word-break:break-all;max-height:200px;overflow-y:auto;display:none}
+    .error-detail.show{display:block}
+    .result-area{display:none}.result-area.show{display:block}
+    .summary-preview{background:var(--bg);border-radius:12px;padding:24px;line-height:1.8;font-size:.98rem;max-height:500px;overflow-y:auto;border:1px solid rgba(255,255,255,.06)}
+    .summary-preview h1,.summary-preview h2,.summary-preview h3{color:var(--primary-light);margin:16px 0 8px}
+    .summary-preview ul,.summary-preview ol{padding-left:24px}
+    .summary-preview li{margin:4px 0}
+    .summary-preview strong{color:var(--accent)}
+    .toast{position:fixed;top:24px;right:24px;padding:14px 24px;border-radius:10px;color:#fff;font-weight:600;z-index:9999;max-width:500px;animation:slideIn .3s ease,fadeOut .3s ease 3.7s forwards;box-shadow:0 4px 16px rgba(0,0,0,.3);white-space:pre-wrap}
+    .toast.success{background:var(--success)}.toast.error{background:var(--error)}
+    @keyframes slideIn{from{transform:translateX(100px);opacity:0}to{transform:translateX(0);opacity:1}}
+    @keyframes fadeOut{to{opacity:0;transform:translateY(-10px)}}
+    @keyframes fadeIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+    .spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+    @media(max-width:640px){.container{padding:24px 16px 40px}header h1{font-size:1.8rem}.card{padding:20px}.btn{padding:12px 24px;font-size:.95rem}.api-bar{flex-direction:column}.api-bar select{min-width:100%}}
+    /* 双模型配置区域 */
+    .model-section{background:var(--bg-card);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);padding:24px 28px;margin-bottom:20px}
+    .model-section-title{font-size:1rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;color:var(--text-muted)}
+    .model-slot{padding:16px 20px;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,.02);margin-bottom:14px}
+    .model-slot:last-child{margin-bottom:0}
+    .model-slot-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+    .model-badge{padding:4px 12px;border-radius:6px;font-size:.8rem;font-weight:700;color:#fff;white-space:nowrap}
+    .model-badge.a{background:linear-gradient(135deg,#6366f1,#4f46e5)}
+    .model-badge.b{background:linear-gradient(135deg,#f59e0b,#d97706)}
+    .model-slot-desc{font-size:.85rem;color:var(--text-muted)}
+    .model-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .model-row label{font-weight:600;white-space:nowrap;color:var(--text-muted);font-size:.85rem}
+    .model-row select{padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:.9rem;outline:none;cursor:pointer;min-width:160px;transition:border-color .3s}
+    .model-row select:focus{border-color:var(--primary)}
+    .model-row select option{background:var(--bg-card);color:var(--text)}
+    .model-row input[type="password"]{flex:1;min-width:180px;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:.9rem;outline:none;transition:border-color .3s}
+    .model-row input:focus{border-color:var(--primary)}
+    .model-info{font-size:.75rem;color:var(--text-muted);opacity:.7;margin-top:6px;padding-left:4px}
+    .model-custom{display:none;gap:10px;margin-top:8px;align-items:center;flex-wrap:wrap}
+    .model-custom.show{display:flex}
+    .model-custom label{font-weight:600;white-space:nowrap;color:var(--text-muted);font-size:.8rem}
+    .model-custom input{flex:1;min-width:140px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:.85rem;outline:none;transition:border-color .3s}
+    .model-custom input:focus{border-color:var(--primary)}
+    /* 按钮提示气泡 */
+    .btn-with-tip{position:relative;display:inline-flex;flex-direction:column;align-items:center}
+    .btn-tip{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);background:#1e293b;color:#e2e8f0;padding:10px 14px;border-radius:8px;font-size:.8rem;font-weight:400;white-space:pre-line;width:260px;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);opacity:0;visibility:hidden;transition:all .25s;z-index:100;pointer-events:none;line-height:1.5}
+    .btn-tip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#1e293b}
+    .btn-with-tip:hover .btn-tip{opacity:1;visibility:visible;bottom:calc(100% + 6px)}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>AI 智能总结 PPT 生成器</h1>
+      <p>输入文本或导入文件，AI 大模型智能总结，一键生成精美 PPT</p>
+    </header>
+
+    <!-- ============ 双模型配置 ============ -->
+    <div class="model-section">
+      <div class="model-section-title">🤖 AI 模型配置（可分别选择不同模型）</div>
+    
+      <!-- 模型 A：内容总结 -->
+      <div class="model-slot">
+        <div class="model-slot-header">
+          <span class="model-badge a">模型 A</span>
+          <span class="model-slot-desc">用于深度总结长文本（提取核心观点、关键要点）</span>
+        </div>
+        <div class="model-row">
+          <label>服务商：</label>
+          <select id="providerSelectA" onchange="onProviderChange('A')">
+            <option value="qwen" selected>🔮 通义千问 Qwen（默认）</option>
+            <option value="kimi">🌙 Kimi (Moonshot)</option>
+            <option value="yuanbao">🟠 腾讯元宝</option>
+            <option value="doubao">🫘 豆包</option>
+            <option value="deepseek">🔍 DeepSeek</option>
+            <option value="zhipu">🔷 智谱清言</option>
+            <option value="36kaippt">📊 36KaiPPT</option>
+            <option value="custom">⚙️ 自定义</option>
+          </select>
+          <label>🔑 Key：</label>
+          <input type="password" id="apiKeyA" placeholder="模型 A 的 API Key" />
+        </div>
+        <div class="model-custom" id="customConfigA">
+          <label>🌐 Endpoint：</label>
+          <input type="text" id="customEndpointA" placeholder="https://your-api.com/v1/chat/completions" />
+          <label>📦 Model：</label>
+          <input type="text" id="customModelA" placeholder="model-name" />
+        </div>
+        <div class="model-info" id="providerInfoA"></div>
+      </div>
+    
+      <!-- 模型 B：PPT 结构生成 -->
+      <div class="model-slot">
+        <div class="model-slot-header">
+          <span class="model-badge b">模型 B</span>
+          <span class="model-slot-desc">用于根据总结内容生成 PPT 页面结构（JSON）</span>
+        </div>
+        <div class="model-row">
+          <label>服务商：</label>
+          <select id="providerSelectB" onchange="onProviderChange('B')">
+            <option value="qwen" selected>🔮 通义千问 Qwen（默认）</option>
+            <option value="kimi">🌙 Kimi (Moonshot)</option>
+            <option value="yuanbao">🟠 腾讯元宝</option>
+            <option value="doubao">🫘 豆包</option>
+            <option value="deepseek">🔍 DeepSeek</option>
+            <option value="zhipu">🔷 智谱清言</option>
+            <option value="36kaippt">📊 36KaiPPT</option>
+            <option value="custom">⚙️ 自定义</option>
+          </select>
+          <label>🔑 Key：</label>
+          <input type="password" id="apiKeyB" placeholder="模型 B 的 API Key" />
+        </div>
+        <div class="model-custom" id="customConfigB">
+          <label>🌐 Endpoint：</label>
+          <input type="text" id="customEndpointB" placeholder="https://your-api.com/v1/chat/completions" />
+          <label>📦 Model：</label>
+          <input type="text" id="customModelB" placeholder="model-name" />
+        </div>
+        <div class="model-info" id="providerInfoB"></div>
+      </div>
+    </div>
+    
+    <!-- ============ CORS 代理配置 ============ -->
+    <div class="proxy-row">
+      <label>🔀 CORS 代理（可选）：</label>
+      <input type="text" id="corsProxy" placeholder="留空=直接请求，填写如 http://localhost:8080/" />
+    </div>
+    <div class="proxy-hint" id="proxyHint">💡 通过本地服务器 (server.ps1) 访问时自动代理，无需配置。直接打开 HTML 文件时才需手动填写代理地址</div>
+
+    <!-- ============ AI 提示词（替代原来的风格选择） ============ -->
+    <div class="options-row">
+      <div class="option-group" style="flex:1;min-width:300px">
+        <label>💬 PPT 提示词（可选）：</label>
+        <input type="text" id="pptPrompt" placeholder="如：科技感强、适合大学生汇报、简洁商务风、每页不超过 4 个要点..." style="flex:1;min-width:200px;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:.9rem;outline:none;transition:border-color .3s" />
+      </div>
+    </div>
+
+    <!-- ============ 内容输入 ============ -->
+    <div class="card">
+      <div class="card-title">
+        <span class="icon" style="background:rgba(99,102,241,.15);color:var(--primary-light)">📝</span>
+        内容输入
+      </div>
+      <textarea id="textInput" placeholder="在此输入或粘贴需要总结的文字内容...&#10;&#10;支持任意长度的文本，AI 将自动提炼要点并生成结构化 PPT。"></textarea>
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" multiple accept=".xlsx,.xls,.csv,.doc,.docx,.ppt,.pptx,.txt" />
+        <div class="upload-icon">📂</div>
+        <p><strong>点击上传</strong> 或拖拽文件到此处</p>
+        <div class="formats">支持 Excel (.xlsx/.xls/.csv) · Word (.docx) · PPT (.pptx) · TXT</div>
+      </div>
+      <div class="file-list" id="fileList"></div>
+    </div>
+
+    <!-- ============ 操作按钮（带悬停提示） ============ -->
+    <div class="btn-row">
+      <div class="btn-with-tip">
+        <button class="btn btn-primary" id="btnSummarize" onclick="handleSummarize()">✨ AI 总结</button>
+        <div class="btn-tip">调用「模型 A」对输入内容进行深度总结。
+可独立使用，也可先总结再生成 PPT。
+总结结果会显示在下方预览区。</div>
+      </div>
+      <div class="btn-with-tip">
+        <button class="btn btn-accent" id="btnGenPPT" onclick="handleGeneratePPT()">📊 生成 PPT 结构</button>
+        <div class="btn-tip">调用「模型 B」生成 PPT 页面结构。
+如果已有总结，基于总结生成；
+否则直接基于输入内容生成。
+可配合提示词自定义风格。</div>
+      </div>
+      <div class="btn-with-tip">
+        <button class="btn btn-success" id="btnDownload" onclick="handleDownload()" disabled>📥 下载 PPT</button>
+        <div class="btn-tip">将已生成的 PPT 结构渲染为
+.pptx 文件并下载到本地。
+需先点击「生成 PPT 结构」。</div>
+      </div>
+    </div>
+
+    <!-- 进度条 + 错误详情 -->
+    <div class="progress-area" id="progressArea">
+      <div class="progress-bar-bg"><div class="progress-bar" id="progressBar"></div></div>
+      <div class="progress-text" id="progressText">准备中...</div>
+      <div class="error-detail" id="errorDetail"></div>
+    </div>
+
+    <!-- 结果预览 -->
+    <div class="card result-area" id="resultArea">
+      <div class="card-title">
+        <span class="icon" style="background:rgba(34,197,94,.15);color:var(--success)" id="resultIcon">📊</span>
+        <span id="resultTitle">结果预览</span>
+      </div>
+      <div class="summary-preview" id="summaryPreview"></div>
+    </div>
+  </div>
+
+<script>
+// ============================================================================
+// AI 智能总结 PPT 生成器 - 核心脚本
+//
+// 整体流程说明（三个按钮独立运作）：
+// 1. 用户输入文本或上传文件（支持 Excel/Word/PPT/TXT）
+// 2. 「AI 总结」按钮：调用模型 A 对内容进行智能总结（Markdown 格式）
+// 3. 「生成 PPT 结构」按钮：调用模型 B 将内容（或已有总结）转为 PPT 结构（JSON）
+// 4. 「下载 PPT」按钮：使用 PptxGenJS 库将 JSON 结构渲染为 .pptx 文件并下载
+//
+// 所有大模型调用均兼容 OpenAI Chat Completions 协议：
+//   POST /v1/chat/completions
+//   Headers: { Authorization: "Bearer <API_KEY>", Content-Type: "application/json" }
+//   Body: { model, messages: [{role, content}], temperature, max_tokens }
+//   Response: { choices: [{ message: { content } }] }
+// ============================================================================
+
+// ==================== 全局状态 ====================
+let extractedText = '';     // 从上传文件中提取的全部文本
+let summaryMarkdown = '';   // AI 生成的 Markdown 总结内容
+let parsedSlides = [];      // 解析后的 PPT 页面结构数组
+const uploadedFiles = [];   // 已上传的文件列表
+
+// ==================== PPT 风格主题配置（默认使用商务蓝） ====================
+// 每种风格定义了一组颜色方案，用于 PptxGenJS 渲染
+// 颜色值为 6 位十六进制（不含 # 前缀），PptxGenJS 要求此格式
+const STYLE_THEMES = {
+  // 商务蓝：深蓝底色 + 蓝色强调，适合正式场合
+  business: {
+    name: '商务蓝',
+    c: {
+      primary: '1E3A5F',    // 主色（底部色带）
+      accent: '2563EB',     // 强调色（装饰条）
+      dark: '0F172A',       // 内容页背景
+      text: 'F1F5F9',       // 正文颜色
+      muted: '94A3B8',      // 次要文字颜色
+      white: 'FFFFFF',      // 标题/高亮文字
+      bg1: '0C2340',        // 封面/结尾页背景
+      bg2: '1E3A5F',        // 标题区域背景
+      contentBg: '1A2F4A',  // 内容区域背景（预留）
+      accentBar: '3B82F6',  // 顶部装饰条
+      titleBar: '1D4ED8'    // 标题栏背景（预留）
+    }
+  },
+  // 科技紫：深紫底色 + 紫色强调，科技感强
+  tech: {
+    name: '科技紫',
+    c: {
+      primary: '4C1D95', accent: 'A855F7', dark: '1A0A2E',
+      text: 'F5F3FF', muted: 'A78BFA', white: 'FFFFFF',
+      bg1: '2E1065', bg2: '4C1D95', contentBg: '3B1A6E',
+      accentBar: 'C084FC', titleBar: '7C3AED'
+    }
+  },
+  // 简约白：白底黑字 + 灰色线条，适合打印和简约风格
+  minimal: {
+    name: '简约白',
+    c: {
+      primary: '1F2937', accent: '6B7280', dark: 'FFFFFF',
+      text: '1F2937', muted: '6B7280', white: '111827',
+      bg1: 'F9FAFB', bg2: 'F3F4F6', contentBg: 'FFFFFF',
+      accentBar: 'D1D5DB', titleBar: 'E5E7EB'
+    }
+  }
+};
+
+// ==================== 文件上传处理 ====================
+const uploadZone = document.getElementById('uploadZone');
+const fileInput = document.getElementById('fileInput');
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+/** 处理上传的文件，根据扩展名选择对应的解析器 */
+async function handleFiles(files) {
+  for (const file of files) {
+    const ext = file.name.split('.').pop().toLowerCase();
+    let text = '';
+    try {
+      if (['xlsx','xls','csv'].includes(ext)) text = await parseExcel(file);
+      else if (ext === 'docx') text = await parseWord(file);
+      else if (ext === 'pptx') text = await parsePPTX(file);
+      else if (ext === 'txt') text = await file.text();
+      else if (ext === 'doc') text = '[提示] .doc 格式较旧，建议转为 .docx 后重新上传';
+      else if (ext === 'ppt') text = '[提示] .ppt 格式较旧，建议转为 .pptx 后重新上传';
+      else text = await file.text();
+    } catch (err) { text = '[解析失败] ' + file.name + ': ' + err.message; }
+    uploadedFiles.push({ name: file.name, text });
+    extractedText += '\n\n--- 来自文件: ' + file.name + ' ---\n' + text;
+  }
+  renderFileList();
+  toast('成功导入 ' + files.length + ' 个文件', 'success');
+}
+function renderFileList() {
+  document.getElementById('fileList').innerHTML = uploadedFiles.map((f, i) =>
+    '<span class="file-tag">📄 ' + f.name + ' <span class="remove" onclick="removeFile(' + i + ')">✕</span></span>'
+  ).join('');
+}
+function removeFile(idx) {
+  uploadedFiles.splice(idx, 1);
+  extractedText = '';
+  uploadedFiles.forEach(f => { extractedText += '\n\n--- 来自文件: ' + f.name + ' ---\n' + f.text; });
+  renderFileList();
+}
+
+// ==================== 文件解析工具 ====================
+/** 解析 Excel 文件，提取所有工作表的 CSV 文本 */
+async function parseExcel(file) {
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, { type: 'array' });
+  let text = '';
+  wb.SheetNames.forEach(name => { text += '\n[工作表: ' + name + ']\n' + XLSX.utils.sheet_to_csv(wb.Sheets[name]) + '\n'; });
+  return text;
+}
+/** 解析 Word(.docx) 文件，使用 mammoth 提取纯文本 */
+async function parseWord(file) {
+  const buf = await file.arrayBuffer();
+  return (await mammoth.extractRawText({ arrayBuffer: buf })).value;
+}
+/** 解析 PPT(.pptx) 文件，通过 JSZip 解压后读取 slide XML 中的文本节点 */
+async function parsePPTX(file) {
+  const buf = await file.arrayBuffer();
+  const zip = await JSZip.loadAsync(buf);
+  let text = '';
+  const slideFiles = Object.keys(zip.files).filter(f => /ppt\/slides\/slide\d+\.xml/.test(f)).sort();
+  for (const sf of slideFiles) {
+    const xml = await zip.files[sf].async('text');
+    const matches = xml.match(/<a:t>[^<]*<\/a:t>/g);
+    if (matches) text += '\n[幻灯片] ' + matches.map(t => t.replace(/<\/?a:t>/g, '')).join(' ') + '\n';
+  }
+  return text || '[PPT内容为空或无法提取文本]';
+}
+
+// ============================================================================
+// 模型供应商配置（PROVIDERS）
+//
+// 所有供应商均兼容 OpenAI Chat Completions API 协议，因此可以用统一的
+// fetch 请求格式调用。关键参数说明：
+//   - name:       显示名称
+//   - endpoint:   完整的 Chat Completions 端点 URL
+//   - model:      模型标识符（必须与供应商文档中的有效模型名一致）
+//   - placeholder: API Key 输入框的提示文字
+//   - info:       模型信息显示在页面上
+//
+// ⚠️ 重要提醒：
+//   1. 本工具为纯前端应用，直接从浏览器调用远程 API。
+//      大多数 API 服务商未配置 CORS 响应头，可能导致浏览器拦截请求。
+//      如遇到此问题，请通过「CORS 代理」功能或部署后端代理解决。
+//   2. API Key 仅存储在浏览器 localStorage 中，不会发送到任何第三方。
+//      但请注意：在前端暴露 API Key 存在安全风险，建议使用测试 Key。
+// ============================================================================
+// ============================================================================
+// 默认 API Key（通义千问）
+// 页面首次打开时自动填入，无需手动输入
+// ⚠️ 注意：在前端代码中暴露 API Key 有安全风险，仅限个人/测试使用
+// ============================================================================
+const DEFAULT_API_KEY = 'sk-94945a44c3f943fe99b95d393e7f6b43';
+
+// ============================================================================
+// PROVIDERS - 模型服务商配置表
+//
+// 所有服务商均使用 OpenAI 兼容的 Chat Completions 格式：
+//   请求: POST <endpoint>
+//   Header: Authorization: Bearer <API_KEY>
+//   Body: { model: "模型名", messages: [...], temperature: 0.3, max_tokens: 8192 }
+//   响应: { choices: [{ message: { role: "assistant", content: "..." } }] }
+//
+// 说明：
+//   - name:       显示名称，用于下拉菜单和错误提示
+//   - endpoint:   API 端点地址，即发送请求的目标 URL
+//   - model:      模型名称，必须和对应平台支持的模型名完全匹配
+//   - placeholder: API Key 输入框的提示文字
+//   - info:       底部显示的模型信息文字（端点 + 模型名）
+// ============================================================================
+const PROVIDERS = {
+  // ---- 通义千问 Qwen（阿里云 DashScope）【默认模型】 ----
+  //
+  // 平台简介：阿里云大模型服务平台“百炼”，提供通义千问系列模型 API
+  // 官方文档：https://help.aliyun.com/zh/model-studio/
+  // API Key 获取：https://dashscope.console.aliyun.com/apiKey
+  // 模型列表：https://help.aliyun.com/zh/model-studio/getting-started/models
+  //
+  // 端点说明：
+  //   这里使用的是“OpenAI 兼容模式”端点，即请求格式和 OpenAI 完全一致
+  //   只需将 endpoint 和 model 替换为通义千问的，其他代码无需改动
+  //   完整端点: https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
+  //
+  // 有效模型名（常用）：
+  //   qwen-max         → 最强推理能力，适合复杂任务（当前默认）
+  //   qwen-plus        → 性能与成本平衡，适合日常使用
+  //   qwen-turbo       → 快速响应，适合简单任务
+  //   qwen-long        → 支持超长上下文（128K+）
+  //   qwq-32b          → 推理增强模型（开源）
+  //
+  // ⚠️ 注意：模型名必须写全小写，如 "Qwen3.7-Max" 会报错 400
+  //
+  qwen: {
+    name: '通义千问',
+    endpoint: 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+    model: 'qwen-max',
+    placeholder: '请输入 DashScope API Key（sk-...），获取：dashscope.console.aliyun.com',
+    info: '通义千问 Qwen - 端点: dashscope.aliyuncs.com | 模型: qwen-max（最强推理）'
+  },
+
+  // ---- Kimi (Moonshot AI) ----
+  //
+  // 平台简介：月之暗面开发的大语言模型，支持超长上下文
+  // 官方文档：https://platform.kimi.com/docs/api/overview
+  // API Key 获取：https://platform.kimi.com （注册后在控制台创建）
+  //
+  // 端点说明：
+  //   完整端点: https://api.moonshot.cn/v1/chat/completions
+  //   符合 OpenAI 兼容格式，无需特殊处理
+  //
+  // 有效模型名：
+  //   moonshot-v1-auto     → 自动选择上下文窗口（当前默认，推荐）
+  //   moonshot-v1-8k       → 8K 上下文，适合短文本
+  //   moonshot-v1-32k      → 32K 上下文，适合中等文本
+  //   moonshot-v1-128k     → 128K 上下文，适合长文本
+  //   kimi-k2.6            → Kimi K2.6 模型（注意：temperature 不可修改）
+  //   kimi-k2.5            → Kimi K2.5 模型
+  //   kimi-k2-turbo-preview → Kimi K2 Turbo 预览版
+  //
+  // ⚠️ 注意：kimi-k2.6 不支持修改 temperature，所以这里用 moonshot-v1-auto 更安全
+  //
+  kimi: {
+    name: 'Kimi',
+    endpoint: 'https://api.moonshot.cn/v1/chat/completions',
+    model: 'moonshot-v1-auto',
+    placeholder: '请输入 Moonshot API Key（sk-...），获取：platform.kimi.com',
+    info: 'Kimi - 端点: api.moonshot.cn/v1 | 模型: moonshot-v1-auto（自动上下文）'
+  },
+
+  // ---- 腾讯元宝（混元 Hunyuan）----
+  //
+  // 平台简介：腾讯混元大模型，集成在腾讯元宝产品中
+  // 官方文档：https://cloud.tencent.com/document/product/1729
+  // API Key 获取：https://cloud.tencent.com （注册后在控制台创建密钥）
+  //
+  // 端点说明：
+  //   完整端点: https://api.hunyuan.cloud.tencent.com/v1/chat/completions
+  //   符合 OpenAI 兼容格式
+  //
+  // 有效模型名：
+  //   hunyuan-turbos-latest → 混元 TurboS 最新版（当前默认）
+  //   hunyuan-turbo-latest  → 混元 Turbo 最新版
+  //   hunyuan-pro           → 混元 Pro（最强）
+  //   hunyuan-standard      → 混元 标准版
+  //   hunyuan-lite          → 混元 Lite（免费）
+  //
+  yuanbao: {
+    name: '腾讯元宝',
+    endpoint: 'https://api.hunyuan.cloud.tencent.com/v1/chat/completions',
+    model: 'hunyuan-turbos-latest',
+    placeholder: '请输入腾讯混元 API Key，获取：cloud.tencent.com',
+    info: '腾讯元宝 (Hunyuan) - 端点: api.hunyuan.cloud.tencent.com | 模型: hunyuan-turbos-latest'
+  },
+
+  // ---- 豆包（字节跳动·火山引擎）----
+  //
+  // 平台简介：字节跳动旗下 AI 模型，通过火山引擎 ARK 平台提供 API
+  // 官方文档：https://www.volcengine.com/docs/82379
+  // API Key 获取：https://console.volcengine.com/ark
+  //
+  // 端点说明：
+  //   完整端点: https://ark.cn-beijing.volces.com/api/v3/chat/completions
+  //   符合 OpenAI 兼容格式
+  //
+  // 有效模型名：
+  //   doubao-pro-32k    → 豆包 Pro 32K 上下文（当前默认）
+  //   doubao-pro-128k   → 豆包 Pro 128K 上下文
+  //   doubao-lite-32k   → 豆包 Lite 32K（更快更便宜）
+  //   doubao-1.5-pro-32k → 豆包 1.5 Pro
+  //
+  // ⚠️ 注意：豆包的模型名可能需要替换为你在火山引擎控制台创建的 endpoint ID
+  //   如果报 404 错误，请到控制台检查具体的 endpoint ID
+  //
+  doubao: {
+    name: '豆包',
+    endpoint: 'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
+    model: 'doubao-pro-32k',
+    placeholder: '请输入火山引擎 API Key，获取：console.volcengine.com/ark',
+    info: '豆包 (火山引擎) - 端点: ark.cn-beijing.volces.com | 模型: doubao-pro-32k'
+  },
+
+  // ---- DeepSeek ----
+  //
+  // 平台简介：深度求索开发的开源大语言模型，性价比高，推理能力强
+  // 官方文档：https://platform.deepseek.com/api-docs
+  // API Key 获取：https://platform.deepseek.com （注册后在控制台创建）
+  //
+  // 端点说明：
+  //   完整端点: https://api.deepseek.com/chat/completions
+  //   符合 OpenAI 兼容格式，无需特殊处理
+  //
+  // 有效模型名：
+  //   deepseek-chat     → DeepSeek-V3（对话模型，当前默认）
+  //   deepseek-reasoner → DeepSeek-R1（推理模型，擅长数学/编程）
+  //
+  deepseek: {
+    name: 'DeepSeek',
+    endpoint: 'https://api.deepseek.com/chat/completions',
+    model: 'deepseek-chat',
+    placeholder: '请输入 DeepSeek API Key（sk-...），获取：platform.deepseek.com',
+    info: 'DeepSeek - 端点: api.deepseek.com | 模型: deepseek-chat（V3 对话模型）'
+  },
+
+  // ---- 智谱清言 (GLM) ----
+  //
+  // 平台简介：智谱 AI 开发的大语言模型，清华系背景
+  // 官方文档：https://open.bigmodel.cn/dev/api
+  // API Key 获取：https://open.bigmodel.cn （注册后在控制台创建）
+  //
+  // 端点说明：
+  //   完整端点: https://open.bigmodel.cn/api/paas/v4/chat/completions
+  //   符合 OpenAI 兼容格式
+  //
+  // 有效模型名：
+  //   glm-4-plus  → GLM-4 Plus（最强，当前默认）
+  //   glm-4       → GLM-4（标准版）
+  //   glm-4-flash → GLM-4 Flash（免费）
+  //   glm-4-long  → GLM-4 Long（长上下文）
+  //   glm-4v      → GLM-4V（多模态，支持图片）
+  //
+  zhipu: {
+    name: '智谱清言',
+    endpoint: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+    model: 'glm-4-plus',
+    placeholder: '请输入智谱 API Key，获取：open.bigmodel.cn',
+    info: '智谱清言 (GLM) - 端点: open.bigmodel.cn | 模型: glm-4-plus'
+  },
+
+  // ---- 36KaiPPT ----
+  // ⚠️ 占位配置：以下端点和模型名需要替换为 36KaiPPT 官方提供的实际值
+  // 请根据 36KaiPPT 官方文档修改 endpoint 和 model
+  '36kaippt': {
+    name: '36KaiPPT',
+    endpoint: 'https://api.36kaippt.com/v1/chat/completions',
+    model: '36kaippt-v1',
+    placeholder: '请输入 36KaiPPT API Key',
+    info: '36KaiPPT - 请根据官方文档修改代码中 PROVIDERS 的 endpoint 和 model'
+  },
+
+  // ---- 自定义（OpenAI 兼容协议）----
+  //
+  // 适用于任何兼容 OpenAI Chat Completions 格式的 API 服务
+  // 例如：OpenAI、Azure OpenAI、本地部署的模型（Ollama、vLLM 等）
+  //
+  // 使用方法：
+  //   1. 在下拉菜单选择“自定义”
+  //   2. 在下方输入框填写完整的 Endpoint URL
+  //   3. 填写对应的模型名称
+  //   4. 填入 API Key
+  //
+  // 示例（OpenAI）：
+  //   Endpoint: https://api.openai.com/v1/chat/completions
+  //   Model:    gpt-4o
+  //
+  // 示例（本地 Ollama）：
+  //   Endpoint: http://localhost:11434/v1/chat/completions
+  //   Model:    llama3
+  //
+  custom: {
+    name: '自定义',
+    endpoint: '',
+    model: '',
+    placeholder: '请输入 API Key',
+    info: '自定义 - 请在上方输入 Endpoint 和 Model（需兼容 OpenAI Chat Completions 格式）'
+  }
+};
+
+/** 获取指定插槽(A/B)的模型配置，自定义模型从对应输入框读取 endpoint 和 model */
+function getProvider(slot) {
+  slot = slot || 'A';
+  const key = document.getElementById('providerSelect' + slot).value;
+  const base = PROVIDERS[key] || PROVIDERS.qwen;
+  if (key === 'custom') {
+    return {
+      ...base,
+      endpoint: document.getElementById('customEndpoint' + slot).value.trim(),
+      model: document.getElementById('customModel' + slot).value.trim()
+    };
+  }
+  return base;
+}
+
+/** 模型切换时更新 UI 提示文字、恢复保存的 API Key、显隐自定义配置行 */
+function onProviderChange(slot) {
+  slot = slot || 'A';
+  const selectKey = document.getElementById('providerSelect' + slot).value;
+  const provider = getProvider(slot);
+  document.getElementById('apiKey' + slot).placeholder = provider.placeholder;
+  document.getElementById('providerInfo' + slot).textContent = provider.info;
+  document.getElementById('customConfig' + slot).classList.toggle('show', selectKey === 'custom');
+  // 恢复该模型+插槽之前保存的 API Key（每个模型每个插槽独立存储）
+  // 如果没有保存的 Key 且是通义千问，自动填入默认 Key
+  const savedKey = localStorage.getItem('apikey_' + slot + '_' + selectKey);
+  const defaultKey = (selectKey === 'qwen') ? DEFAULT_API_KEY : '';
+  document.getElementById('apiKey' + slot).value = savedKey || defaultKey;
+  localStorage.setItem('selected_provider_' + slot, selectKey);
+  if (selectKey === 'custom') {
+    document.getElementById('customEndpoint' + slot).value = localStorage.getItem('custom_endpoint_' + slot) || '';
+    document.getElementById('customModel' + slot).value = localStorage.getItem('custom_model_' + slot) || '';
+  }
+}
+
+// ============================================================================
+// 通用大模型 API 调用函数（增强错误处理）
+//
+// 所有供应商统一使用 OpenAI Chat Completions 格式：
+//   请求：POST endpoint
+//   Header: Authorization: Bearer <API_KEY>
+//   Body: { model, messages: [{role, content}], temperature, max_tokens }
+//   响应: { choices: [{ message: { role, content } }] }
+//
+// CORS 代理说明：
+//   浏览器直接从前端页面调用远程 API 时，由于同源策略（Same-Origin Policy），
+//   如果目标 API 服务器没有返回 Access-Control-Allow-Origin 响应头，
+//   浏览器会拦截响应，表现为"网络错误"或"Failed to fetch"。
+//   解决方案：
+//     1. 配置 CORS 代理（如 cors-anywhere、nginx 反向代理）
+//     2. 在浏览器中安装 CORS 解除插件（仅限开发测试）
+//     3. 将本工具部署到后端服务中转发 API 请求
+// ============================================================================
+// ============================================================================
+// 公共 CORS 代理列表（file:// 协议下自动使用）
+// 浏览器直接从前端调用远程 API 时，由于同源策略会被 CORS 拦截
+// 以下代理支持 POST 请求转发，按优先级排列，自动回退
+// ============================================================================
+const PUBLIC_CORS_PROXIES = [
+  { name: 'cors.eu.org',    buildUrl: (target) => 'https://cors.eu.org/' + target },
+  { name: 'corsproxy.io',   buildUrl: (target) => 'https://corsproxy.io/?' + encodeURIComponent(target) },
+];
+// 上次成功使用的公共代理索引（避免每次都从第一个试）
+let _lastWorkingProxyIdx = -1;
+
+async function callLLMAPI(systemPrompt, userContent, slot) {
+  slot = slot || 'A';
+  const apiKey = document.getElementById('apiKey' + slot).value.trim();
+  const provider = getProvider(slot);
+  const providerKey = document.getElementById('providerSelect' + slot).value;
+  const slotLabel = slot === 'A' ? '模型A(总结)' : '模型B(PPT)';
+
+  // --- 参数校验 ---
+  if (!apiKey) throw new Error('请先输入「' + slotLabel + '」的 API Key');
+  if (!provider.endpoint) throw new Error('请先配置 API Endpoint');
+  if (!provider.model) throw new Error('请先配置 Model 名称');
+
+  // --- 构造请求头（标准 OpenAI 格式） ---
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + apiKey
+  };
+
+  // --- 构造请求体 ---
+  const requestBody = {
+    model: provider.model,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userContent }
+    ],
+    temperature: 0.3,
+    max_tokens: 8192
+  };
+
+  // --- 构建代理 URL 候选列表 ---
+  // 优先级：localhost内置代理 > 手动CORS代理 > 公共CORS代理 > 直连
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const corsProxy = document.getElementById('corsProxy').value.trim();
+  const proxyCandidates = []; // [{ name, url }]
+
+  if (isLocalhost) {
+    proxyCandidates.push({ name: '本地服务器', url: '/api-proxy?url=' + encodeURIComponent(provider.endpoint) });
+  }
+  if (corsProxy) {
+    const proxyBase = corsProxy.endsWith('/') ? corsProxy : corsProxy + '/';
+    proxyCandidates.push({ name: '手动代理', url: proxyBase + provider.endpoint });
+  }
+  // 公共 CORS 代理（file:// 模式或未配置代理时自动启用）
+  PUBLIC_CORS_PROXIES.forEach((p, idx) => {
+    proxyCandidates.push({ name: p.name, url: p.buildUrl(provider.endpoint), _pubIdx: idx });
+  });
+  // 最后尝试直连（部分 API 如通义千问可能已支持 CORS）
+  proxyCandidates.push({ name: '直连', url: provider.endpoint });
+
+  console.log('[代理候选列表]', proxyCandidates.map(c => c.name + ' → ' + c.url.substring(0, 80)));
+
+  // --- 遍历代理候选发送请求 ---
+  // 如果上次有成功的公共代理索引，优先使用它（移到最前面）
+  if (_lastWorkingProxyIdx >= 0) {
+    const found = proxyCandidates.findIndex(c => c._pubIdx === _lastWorkingProxyIdx);
+    if (found > 0) {
+      const temp = proxyCandidates.splice(found, 1)[0];
+      proxyCandidates.unshift(temp);
+    }
+  }
+
+  let resp;
+  let lastError = null;
+  const MAX_RETRIES = 3;
+
+  for (let pi = 0; pi < proxyCandidates.length; pi++) {
+    const candidate = proxyCandidates[pi];
+    const requestUrl = candidate.url;
+
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        console.log('[请求] 代理=' + candidate.name + ' 尝试=' + (attempt + 1) + '/' + (MAX_RETRIES + 1) + ' → ' + requestUrl.substring(0, 100));
+        resp = await fetch(requestUrl, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(requestBody)
+        });
+        // fetch 成功（收到 HTTP 响应）
+        if (candidate._pubIdx !== undefined) _lastWorkingProxyIdx = candidate._pubIdx;
+        console.log('[成功] 代理=' + candidate.name + ' HTTP ' + resp.status);
+        break; // 跳出重试循环，进入响应处理
+      } catch (networkErr) {
+        lastError = networkErr;
+        console.warn('[网络错误] 代理=' + candidate.name + ': ' + networkErr.message);
+
+        // 429 重试
+        if (attempt < MAX_RETRIES) {
+          const waitSec = Math.min(5 * (attempt + 1), 15);
+          console.log('[等待] ' + waitSec + ' 秒后重试...');
+          const progressEl = document.getElementById('progressText');
+          if (progressEl) progressEl.textContent = '⏳ 代理 ' + candidate.name + ' 连接失败，等待重试 (' + (attempt + 1) + '/' + MAX_RETRIES + ')...';
+          await new Promise(r => setTimeout(r, waitSec * 1000));
+        }
+      }
+    }
+
+    // 如果 fetch 成功拿到了响应，跳出代理候选循环
+    if (resp) break;
+
+    // fetch 抛异常（CORS/网络错误），尝试下一个代理
+    console.log('[回退] 代理 ' + candidate.name + ' 不可用，尝试下一个...');
+  }
+
+  // 所有代理都失败
+  if (!resp) {
+    throw new Error(
+      '【网络错误】所有代理方式均失败\n' +
+      '━━━━━━━━━━━━━━━━━━━━━━\n' +
+      '端点：' + provider.endpoint + '\n' +
+      '已尝试：' + proxyCandidates.map(c => c.name).join('、') + '\n' +
+      '━━━━━━━━━━━━━━━━━━━━━━\n' +
+      '浏览器错误：' + (lastError ? lastError.message : '未知') + '\n\n' +
+      '💡 建议：\n' +
+      '1. 运行 server.ps1 本地服务器（最稳定）\n' +
+      '2. 在 CORS 代理框填入可用的代理地址\n' +
+      '3. 使用 Chrome 浏览器并安装 CORS Unblock 插件'
+    );
+  }
+
+  // --- 处理 HTTP 错误响应 ---
+  if (!resp.ok) {
+    let errBody = '';
+    try {
+      // 尝试解析 JSON 格式的错误响应
+      const errData = await resp.json();
+      errBody = JSON.stringify(errData, null, 2);
+      const msg = (errData.error && errData.error.message) || errData.message || errData.detail || '';
+
+      // 根据 HTTP 状态码给出针对性的修复建议
+      let hint = '';
+      if (resp.status === 400) hint = '\n💡 请求参数错误，可能是 model 名称不正确或 messages 格式有误';
+      else if (resp.status === 401) hint = '\n💡 API Key 无效或已过期\n   → 请到对应平台检查 Key 是否正确、是否已激活';
+      else if (resp.status === 403) hint = '\n💡 权限不足\n   → 该 API Key 可能没有对应模型的访问权限，或账户余额不足';
+      else if (resp.status === 404) hint = '\n💡 端点或模型不存在\n   → 请检查 model 名称（如 Kimi 应为 moonshot-v1-auto 而非 kimi-latest）\n   → 检查 endpoint URL 是否正确';
+      else if (resp.status === 429) hint = '\n💡 请求频率超限\n   → 请稍后重试，或在平台提升速率限制';
+      else if (resp.status >= 500) hint = '\n💡 服务器端错误，请稍后重试';
+
+      throw new Error(
+        '【API 错误】HTTP ' + resp.status + ' ' + resp.statusText + '\n' +
+        '━━━━━━━━━━━━━━━━━━━━━━\n' +
+        '模型：' + slotLabel + ' - ' + provider.name + ' (' + provider.model + ')\n' +
+        '端点：' + provider.endpoint + '\n' +
+        (msg ? '错误信息：' + msg + '\n' : '') +
+        hint + '\n' +
+        '━━━━━━━━━━━━━━━━━━━━━━\n' +
+        '响应详情：\n' + errBody
+      );
+    } catch (parseErr) {
+      // 如果已经 throw 了我们自定义格式的错误，直接向上抛
+      if (parseErr.message.startsWith('【')) throw parseErr;
+      // JSON 解析失败，尝试读取纯文本响应
+      const textResp = await resp.text().catch(() => '(无法读取)');
+      throw new Error(
+        '【API 错误】HTTP ' + resp.status + ' ' + resp.statusText + '\n' +
+        '━━━━━━━━━━━━━━━━━━━━━━\n' +
+        '模型：' + slotLabel + ' - ' + provider.name + ' (' + provider.model + ')\n' +
+        '端点：' + provider.endpoint + '\n' +
+        '响应内容：' + textResp.substring(0, 800)
+      );
+    }
+  }
+
+  // --- 解析成功响应 ---
+  // 标准响应格式：{ choices: [{ message: { role: "assistant", content: "..." } }] }
+  let data;
+  try {
+    data = await resp.json();
+  } catch (e) {
+    throw new Error(
+      '【格式异常】API 返回内容无法解析为 JSON\n' +
+      '模型：' + slotLabel + ' - ' + provider.name + '\n端点：' + provider.endpoint
+    );
+  }
+
+  if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+    throw new Error(
+      '【数据异常】API 返回结构不符合预期\n' +
+      '期望包含：choices[0].message.content\n' +
+      '实际返回：' + JSON.stringify(data, null, 2).substring(0, 800)
+    );
+  }
+
+  return data.choices[0].message.content;
+}
+
+// ============================================================================
+// 按钮1：AI 总结（仅调用模型 A）
+// 对输入内容进行深度总结，结果以 Markdown 格式显示在预览区
+// ============================================================================
+async function handleSummarize() {
+  const textInput = document.getElementById('textInput').value.trim();
+  const fullText = (textInput + '\n' + extractedText).trim();
+  if (!fullText) { toast('请先输入或导入内容', 'error'); return; }
+  const apiKeyA = document.getElementById('apiKeyA').value.trim();
+  if (!apiKeyA) { toast('请先输入模型 A 的 API Key', 'error'); return; }
+
+  const providerA = getProvider('A');
+  const btn = document.getElementById('btnSummarize');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> AI 总结中...';
+  hideError();
+  showProgress(true);
+
+  try {
+    updateProgress(10, '正在调用「模型 A: ' + providerA.name + '」分析内容...');
+    const summarySystem =
+      '你是一个专业的内容分析专家。请对用户提供的文本进行深度分析和总结。\n\n' +
+      '请严格按照以下 Markdown 格式输出：\n\n' +
+      '# [总结标题]\n\n## 核心摘要\n[用2-3句话概括全文核心内容]\n\n' +
+      '## 关键要点\n1. [要点1]：[说明]\n2. [要点2]：[说明]\n3. [要点3]：[说明]\n4. [要点4]：[说明]\n5. [要点5]：[说明]\n\n' +
+      '## 详细分析\n### [主题1]\n[详细分析]\n### [主题2]\n[详细分析]\n### [主题3]\n[详细分析]\n\n' +
+      '## 结论与建议\n- [建议1]\n- [建议2]\n- [建议3]\n\n' +
+      '要求：标题精炼有力，每个要点50字以内，详细分析每主题100-200字，专业但易懂。';
+
+    const summary = await callLLMAPI(summarySystem, fullText.substring(0, 30000), 'A');
+    summaryMarkdown = summary;
+    updateProgress(90, '✅ 总结完成！');
+
+    // 渲染 Markdown 预览
+    document.getElementById('resultTitle').textContent = 'AI 总结结果';
+    document.getElementById('resultIcon').textContent = '✨';
+    document.getElementById('summaryPreview').innerHTML = marked.parse(summary);
+    document.getElementById('resultArea').classList.add('show');
+    updateProgress(100, '✅ 总结完成！可点击「生成 PPT 结构」继续，或直接复制总结内容');
+    toast('AI 总结完成！', 'success');
+
+  } catch (err) {
+    showError(err.message);
+    toast('出错了，请查看下方详细信息', 'error');
+    updateProgress(0, '❌ 失败');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '✨ AI 总结';
+  }
+}
+
+// ============================================================================
+// 按钮2：生成 PPT 结构（仅调用模型 B）
+// 如果已有总结(summaryMarkdown)，基于总结生成；否则直接基于输入内容生成
+// 支持通过「PPT 提示词」输入框给 AI 自定义指令
+// ============================================================================
+async function handleGeneratePPT() {
+  const textInput = document.getElementById('textInput').value.trim();
+  const fullText = (textInput + '\n' + extractedText).trim();
+  if (!fullText) { toast('请先输入或导入内容', 'error'); return; }
+  const apiKeyB = document.getElementById('apiKeyB').value.trim();
+  if (!apiKeyB) { toast('请先输入模型 B 的 API Key', 'error'); return; }
+
+  const providerB = getProvider('B');
+  const customPrompt = document.getElementById('pptPrompt').value.trim();
+  const btn = document.getElementById('btnGenPPT');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> 生成 PPT 结构...';
+  hideError();
+  showProgress(true);
+
+  try {
+    // 确定输入内容：优先使用已有总结，否则用原始文本
+    const sourceContent = summaryMarkdown || fullText;
+    const sourceLabel = summaryMarkdown ? '已有总结' : '原始内容';
+    updateProgress(10, '正在调用「模型 B: ' + providerB.name + '」生成 PPT 结构（基于' + sourceLabel + '）...');
+
+    // 构建 system prompt，包含自定义提示词
+    let pptSystem =
+      '你是一个顶级PPT设计专家。基于提供的内容，输出PPT页面结构（仅输出JSON数组，不要其他文字和markdown代码块标记）。\n\n' +
+      '基本要求：\n' +
+      '1. 总共5-8页，第1页封面，最后一页感谢页\n' +
+      '2. 每页不超过5个要点\n' +
+      '3. 每个要点精炼有力，控制在15-40字，适合演示展示\n' +
+      '4. 标题简洁醒目，每页标题不超过12字\n';
+
+    // 添加用户自定义提示词
+    if (customPrompt) {
+      pptSystem += '\n用户额外要求：' + customPrompt + '\n';
+    }
+
+    pptSystem += '\nJSON格式：\n' +
+      '[\n  {"type":"cover","title":"主标题","subtitle":"副标题/日期"},\n' +
+      '  {"type":"content","title":"页面标题","bullets":["要点1","要点2","要点3"],"note":"可选补充"},\n' +
+      '  {"type":"ending","title":"感谢观看","subtitle":"副标题"}\n]\n\n' +
+      '内容：\n' + sourceContent;
+
+    let pptStructure;
+    try {
+      updateProgress(40, 'AI 正在生成 PPT 结构...');
+      const pptJson = await callLLMAPI(pptSystem, '请基于以上内容生成PPT页面结构JSON', 'B');
+      const jsonMatch = pptJson.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) throw new Error('未找到 JSON 数组');
+      pptStructure = JSON.parse(jsonMatch[0]);
+      if (!Array.isArray(pptStructure) || pptStructure.length < 2) throw new Error('结构不合法');
+    } catch (e) {
+      console.warn('AI 生成 PPT 结构失败:', e.message);
+      updateProgress(60, '改用本地智能解析...');
+      pptStructure = buildFallbackStructure(sourceContent);
+    }
+
+    parsedSlides = pptStructure;
+    updateProgress(90, 'PPT 结构已就绪！');
+
+    // 显示 PPT 结构预览（将 JSON 转为简单的 Markdown 列表）
+    const preview = pptStructure.map(s =>
+      '**' + s.title + '**' + (s.bullets ? '\n- ' + s.bullets.join('\n- ') : '')
+    ).join('\n\n');
+    document.getElementById('resultTitle').textContent = 'PPT 结构预览（共 ' + pptStructure.length + ' 页）';
+    document.getElementById('resultIcon').textContent = '📊';
+    document.getElementById('summaryPreview').innerHTML = marked.parse(preview);
+    document.getElementById('resultArea').classList.add('show');
+    document.getElementById('btnDownload').disabled = false;
+    updateProgress(100, '✅ 完成！点击「下载 PPT」获取演示文稿');
+    toast('PPT 结构生成完成！', 'success');
+
+  } catch (err) {
+    showError(err.message);
+    toast('出错了，请查看下方详细信息', 'error');
+    updateProgress(0, '❌ 失败');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '📊 生成 PPT 结构';
+  }
+}
+
+/** 本地降级解析：将 Markdown 文本转为 PPT 结构（当 AI 返回格式异常时使用） */
+function buildFallbackStructure(md) {
+  const slides = [{ type: 'cover', title: '内容总结', subtitle: 'AI 智能总结' }];
+  let title = '', bullets = [];
+  for (const line of md.split('\n')) {
+    if (line.startsWith('# ') && !line.startsWith('## ')) slides[0].title = line.replace('# ', '').trim();
+    if (line.startsWith('## ')) {
+      if (title && bullets.length) slides.push({ type: 'content', title, bullets: [...bullets] });
+      title = line.replace('## ', '').trim(); bullets = [];
+    } else if (/^\d+\.\s/.test(line) || line.startsWith('- ') || line.startsWith('* ')) {
+      bullets.push(line.replace(/^\d+\.\s*/, '').replace(/^[-*]\s*/, '').trim());
+    } else if (line.startsWith('### ')) {
+      if (bullets.length) slides.push({ type: 'content', title, bullets: [...bullets] });
+      title = line.replace('### ', '').trim(); bullets = [];
+    }
+  }
+  if (title && bullets.length) slides.push({ type: 'content', title, bullets: [...bullets] });
+  slides.push({ type: 'ending', title: '感谢观看', subtitle: 'Powered by AI' });
+  return slides;
+}
+
+// ============================================================================
+// PPT 文件生成与下载
+// 使用 PptxGenJS 库将 JSON 结构渲染为 .pptx 文件
+// 默认使用商务蓝风格（用户可通过提示词影响 AI 生成的内容结构）
+// ============================================================================
+function handleDownload() {
+  if (!parsedSlides.length) { toast('请先点击「生成 PPT 结构」', 'error'); return; }
+  generatePPT(parsedSlides);
+}
+
+function generatePPT(slides) {
+  const pptx = new PptxGenJS();
+  pptx.layout = 'LAYOUT_WIDE'; // 16:9 宽屏布局
+
+  // 默认使用商务蓝风格（STYLE_THEMES.business）
+  const theme = STYLE_THEMES.business;
+  const C = theme.c;
+  const isMinimal = false;
+
+  slides.forEach((slide, idx) => {
+    const s = pptx.addSlide();
+
+    if (slide.type === 'cover') {
+      // ---- 封面页 ----
+      s.background = { color: C.bg1 };
+      s.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 0, w: '100%', h: 0.08, fill: { color: C.accentBar } });
+      s.addShape(pptx.shapes.RECTANGLE, { x: 0.8, y: 1.5, w: 0.06, h: 2.5, fill: { color: C.accent } });
+      s.addText(slide.title, {
+        x: 1.2, y: 1.8, w: 10, h: 1.2,
+        fontSize: 40, fontFace: 'Microsoft YaHei', color: C.white, bold: true
+      });
+      s.addText(slide.subtitle || '', {
+        x: 1.2, y: 3.2, w: 10, h: 0.6,
+        fontSize: 18, fontFace: 'Microsoft YaHei', color: C.muted
+      });
+      s.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 7.0, w: '100%', h: 0.5, fill: { color: C.primary } });
+
+    } else if (slide.type === 'ending') {
+      // ---- 结尾页 ----
+      s.background = { color: C.bg1 };
+      s.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 0, w: '100%', h: 0.08, fill: { color: C.accentBar } });
+      s.addText(slide.title, {
+        x: 0, y: 2.5, w: '100%', h: 1.5,
+        fontSize: 44, fontFace: 'Microsoft YaHei', color: C.white, bold: true, align: 'center'
+      });
+      s.addText(slide.subtitle || '', {
+        x: 0, y: 4.2, w: '100%', h: 0.8,
+        fontSize: 16, fontFace: 'Microsoft YaHei', color: C.muted, align: 'center'
+      });
+      s.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 7.0, w: '100%', h: 0.5, fill: { color: C.primary } });
+
+    } else {
+      // ---- 内容页 ----
+      s.background = { color: C.dark };
+      s.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 0, w: '100%', h: 0.06, fill: { color: C.accentBar } });
+      s.addText(String(idx + 1), { x: 12.0, y: 7.0, w: 0.8, h: 0.4, fontSize: 11, color: C.muted, align: 'right' });
+      s.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 0.06, w: '100%', h: 1.2, fill: { color: C.bg2 } });
+      s.addShape(pptx.shapes.RECTANGLE, { x: 0.6, y: 0.3, w: 0.06, h: 0.7, fill: { color: C.accent } });
+      s.addText(slide.title, {
+        x: 0.8, y: 0.2, w: 11, h: 0.9,
+        fontSize: 26, fontFace: 'Microsoft YaHei', color: C.white, bold: true
+      });
+      // 要点列表
+      if (slide.bullets && slide.bullets.length) {
+        const bulletColor = isMinimal ? '374151' : C.text;       // 简约白用深色文字
+        const bulletCode = isMinimal ? '25AA' : '25CF';           // 简约白用空心圆点
+        const bulletTexts = slide.bullets.map(b => ({
+          text: b,
+          options: {
+            fontSize: 16, fontFace: 'Microsoft YaHei', color: bulletColor,
+            bullet: { code: bulletCode }, breakType: 'n',
+            paraSpaceBefore: 8, paraSpaceAfter: 8
+          }
+        }));
+        s.addText(bulletTexts, {
+          x: 1.0, y: 1.6, w: 11, h: 4.8, valign: 'top', lineSpacingMultiple: 1.3
+        });
+      }
+      // 补充说明（页面底部斜体小字）
+      if (slide.note) {
+        s.addText(slide.note, {
+          x: 1.0, y: 6.2, w: 11, h: 0.6,
+          fontSize: 12, fontFace: 'Microsoft YaHei', color: C.muted, italic: true
+        });
+      }
+    }
+  });
+
+  // 生成并触发下载
+  const fileName = 'AI_PPT_' + theme.name + '_' + new Date().toISOString().slice(0, 10) + '.pptx';
+  pptx.writeFile({ fileName });
+  toast('「' + theme.name + '」风格 PPT 已开始下载！', 'success');
+}
+
+// ==================== UI 工具函数 ====================
+function showProgress(v) { document.getElementById('progressArea').classList.toggle('show', v); }
+function updateProgress(pct, txt) {
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = txt;
+}
+function showError(msg) {
+  const el = document.getElementById('errorDetail');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+function hideError() {
+  document.getElementById('errorDetail').classList.remove('show');
+}
+function toast(msg, type) {
+  type = type || 'success';
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+// ==================== 数据持久化与页面初始化 ====================
+// API Key 按插槽+模型分别存储到 localStorage，切换模型时自动恢复
+['A', 'B'].forEach(function(slot) {
+  document.getElementById('apiKey' + slot).addEventListener('change', function() {
+    var providerKey = document.getElementById('providerSelect' + slot).value;
+    localStorage.setItem('apikey_' + slot + '_' + providerKey, this.value);
+  });
+  // 自定义 Endpoint 和 Model 持久化
+  document.getElementById('customEndpoint' + slot).addEventListener('change', function() {
+    localStorage.setItem('custom_endpoint_' + slot, this.value);
+  });
+  document.getElementById('customModel' + slot).addEventListener('change', function() {
+    localStorage.setItem('custom_model_' + slot, this.value);
+  });
+});
+// CORS 代理地址持久化
+document.getElementById('corsProxy').addEventListener('change', function() {
+  localStorage.setItem('cors_proxy', this.value);
+});
+
+// --- 页面加载时恢复上次的配置 ---
+['A', 'B'].forEach(function(slot) {
+  var savedProvider = localStorage.getItem('selected_provider_' + slot) || 'qwen';
+  document.getElementById('providerSelect' + slot).value = savedProvider;
+  onProviderChange(slot);
+});
+
+// CORS 代理处理
+const _isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const _isFile = window.location.protocol === 'file:';
+
+if (_isLocalhost) {
+  // 通过本地服务器访问时，自动使用内置代理，清空 CORS 代理框
+  document.getElementById('corsProxy').value = '';
+  document.getElementById('proxyHint').textContent = '✅ 已检测到本地服务器，API 请求将自动代理，无需手动配置';
+  document.getElementById('proxyHint').style.color = 'var(--success)';
+} else if (_isFile) {
+  // 通过 file:// 直接打开 HTML 文件
+  document.getElementById('proxyHint').innerHTML = '📡 文件模式：将自动使用公共 CORS 代理转发请求。如需更稳定体验，可运行 <b>server.ps1</b> 本地服务器';
+  document.getElementById('proxyHint').style.color = 'var(--accent)';
+  document.getElementById('proxyHint').style.opacity = '1';
+  document.getElementById('proxyHint').style.fontSize = '0.85rem';
+} else {
+  const savedProxy = localStorage.getItem('cors_proxy');
+  if (savedProxy) document.getElementById('corsProxy').value = savedProxy;
+}
+</script>
+</body>
+</html>
