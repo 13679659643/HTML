@@ -6,7 +6,7 @@
 #   /api-proxy?url=https://api.moonshot.cn/v1/chat/completions
 # This avoids the double-slash issue in URL paths.
 
-$port = 3000
+$port = 3001
 $basePath = Split-Path -Parent $MyInvocation.MyCommand.Path
 $indexFile = Join-Path $basePath "index.html"
 

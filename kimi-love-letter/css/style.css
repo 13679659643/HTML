@@ -1,0 +1,1361 @@
+/**
+ * ============================================================
+ * 給阿嬤的情書 · 電影記憶館 — 全局样式表
+ * ============================================================
+ * 
+ * 【功能总结】
+ * 本文件包含整个单页应用的所有样式定义，涵盖：
+ * - 全局CSS变量与设计系统（配色、字体）
+ * - 固定导航栏与滚动进度条
+ * - 首页Hero视频区域与引言卡片
+ * - 展厅I-IV通用模板（展品图+铭牌）
+ * - 展厅II图片画廊与灯箱
+ * - 展厅V百人千言（筛选器+肖像网格+详情弹窗）
+ * - 展厅VI银信局（分屏表单+实时信纸/信封预览）
+ * - 我的收藏页面（收藏卡片网格）
+ * - 关于页面
+ * - 平面图弹窗
+ * - 页脚与Kimi水印
+ * 
+ * 【设计系统】
+ * - 主色调：暖米色(#f5f1e8) + 砖红色(#b34a3a) + 深棕色(#2a2118)
+ * - 字体：LXGW WenKai TC(正文楷体) + Ma Shan Zheng(标题书法体)
+ * - 风格：仿旧纸张质感，怀旧文学氛围
+ * 
+ * @version 2.0
+ * @author 辜涛
+ */
+
+/* ============================================================
+   1. 全局CSS变量 — 统一的设计令牌系统
+   ============================================================ */
+:root {
+  --color-bg: #f5f1e8;              /* 页面背景：暖米色/奶油色 */
+  --color-paper: #fdfaf3;           /* 卡片/信纸背景：更浅的纸色 */
+  --color-ink: #1a1410;             /* 墨色：最深的棕黑色 */
+  --color-text: #2a2118;            /* 主文字色 */
+  --color-text-mute: #8b7d6b;      /* 次要/弱化文字色 */
+  --color-vermilion: #b34a3a;       /* 朱红色/强调色 */
+  --color-border: rgba(120, 80, 40, .15); /* 边框色：半透明棕色 */
+  --font-kai: "LXGW WenKai TC", serif;     /* 楷体：正文用 */
+  --font-hand: "Ma Shan Zheng", "Long Cang", "Liu Jian Mao Cao", "LXGW WenKai TC", serif; /* 书法体：标题用 */
+}
+
+/* ============================================================
+   2. 基础重置
+   ============================================================ */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-kai);
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+a { text-decoration: none; color: inherit; }
+
+/* ============================================================
+   3. 固定导航栏 — 毛玻璃效果 + 滚动进度条
+   ============================================================ */
+.navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 50;
+  background: rgba(253, 250, 243, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.nav-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  height: 48px;
+  overflow-x: auto;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* 导航链接：默认深棕色，激活/悬停时砖红色 */
+.nav-links a {
+  font-size: 14px;
+  padding: 12px 8px;
+  white-space: nowrap;
+  position: relative;
+  transition: color 0.25s;
+  cursor: pointer;
+}
+.nav-links a:hover { color: var(--color-vermilion); }
+.nav-links a.active { color: var(--color-vermilion); }
+.nav-links a.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 8px; right: 8px;
+  height: 2px;
+  background: var(--color-vermilion);
+  border-radius: 1px;
+}
+
+/* 平面图按钮：描边样式 */
+.btn-floorplan {
+  flex-shrink: 0;
+  margin-left: 16px;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--color-text);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.btn-floorplan:hover { background: rgba(120, 80, 40, 0.06); }
+
+/* 滚动进度条 */
+.progress-bar { height: 2px; background: rgba(120, 80, 40, 0.08); }
+.progress-bar-inner {
+  height: 100%;
+  width: 0%;
+  background: var(--color-vermilion);
+  transition: width 0.3s;
+}
+
+/* ============================================================
+   4. 页面路由系统 — SPA页面切换动画
+   ============================================================ */
+.page { display: none; }
+.page.active {
+  display: block;
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   5. 首页Hero区域 — 全屏视频背景 + 渐变遮罩 + 标题叠加
+   ============================================================ */
+.hero {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 600px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: #3a2e22; /* 视频未加载时的兜底色 */
+}
+.hero-bg video { width: 100%; height: 100%; object-fit: cover; }
+
+/* 上下暗角渐变：增强文字可读性 */
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    rgba(26,20,16,0.25) 0%,
+    rgba(0,0,0,0) 40%,
+    rgba(0,0,0,0) 60%,
+    rgba(26,20,16,0.45) 100%
+  );
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 0 24px;
+}
+
+.hero-title {
+  font-family: var(--font-hand);
+  font-size: 42px;
+  font-weight: 400;
+  color: #fff;
+  line-height: 1.1;
+  letter-spacing: 2.1px;
+  margin-bottom: 16px;
+  white-space: nowrap;
+}
+
+.hero-subtitle {
+  font-size: 14px;
+  color: var(--color-vermilion);
+  letter-spacing: 4px;
+  text-align: center;
+}
+
+/* 进入按钮：呼吸灯动画 */
+.hero-enter {
+  position: absolute;
+  bottom: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  animation: breathe 3s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 1; }
+}
+
+/* ============================================================
+   6. 首页引言区域
+   ============================================================ */
+.intro-section {
+  padding: 64px 24px 48px;
+  max-width: 640px;
+  margin: 0 auto;
+  text-align: center;
+}
+.intro-text {
+  font-size: 15px;
+  line-height: 30px;
+  letter-spacing: 0.6px;
+}
+
+/* ============================================================
+   7. 首页导航卡片 — 三张入口卡片
+   ============================================================ */
+.cards-section {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 24px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+@media (min-width: 768px) {
+  .cards-section {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+}
+
+.card {
+  display: block;
+  background: rgba(253, 250, 243, 0.7);
+  border-radius: 12px;
+  padding: 40px 24px 32px;
+  text-align: center;
+  transition: transform 0.25s, box-shadow 0.25s;
+  cursor: pointer;
+  border: 1px solid rgba(120, 80, 40, 0.08);
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(120, 80, 40, 0.1);
+}
+
+.card-icon { width: 48px; height: 48px; margin: 0 auto 20px; }
+.card-icon svg { width: 48px; height: 48px; }
+
+.card-title {
+  font-family: var(--font-hand);
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--color-ink);
+  line-height: 1.3;
+  letter-spacing: 1.12px;
+  margin-bottom: 8px;
+}
+.card-subtitle {
+  font-size: 14px;
+  color: var(--color-text-mute);
+  line-height: 1.5;
+}
+
+/* ============================================================
+   8. 展厅I/III/IV通用模板 — 展品图 + 铭牌 + 导航
+   ============================================================ */
+
+/* 展厅页面容器：顶部留出导航栏高度 */
+.hall-page {
+  padding: 136px 24px 80px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* 展品图片容器 */
+.exhibit-img {
+  max-width: 460px;
+  aspect-ratio: 3/4;
+  border-radius: 4px;
+  box-shadow: 0 4px 24px rgba(26, 20, 16, 0.06);
+  background: var(--color-paper);
+  overflow: hidden;
+  margin: 0 auto 64px;
+}
+.exhibit-img img { width: 100%; height: 100%; object-fit: contain; }
+.exhibit-img.square { max-width: 600px; aspect-ratio: 1/1; }
+
+/* 铭牌区域：纸色背景 + 顶部红线 */
+.plaque {
+  background: var(--color-paper);
+  position: relative;
+  border-radius: 4px;
+  margin-bottom: 64px;
+}
+.plaque-line { height: 2px; background: var(--color-vermilion); width: 100%; }
+.plaque-inner { padding: 48px 56px; }
+@media (max-width: 640px) { .plaque-inner { padding: 32px 24px; } }
+
+.plaque-sub {
+  font-size: 13px;
+  color: var(--color-text-mute);
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+}
+.plaque-title {
+  font-family: var(--font-hand);
+  font-size: 50px;
+  color: var(--color-ink);
+  letter-spacing: 0.04em;
+  margin-bottom: 24px;
+  line-height: 1.2;
+}
+@media (max-width: 640px) { .plaque-title { font-size: 36px; } }
+
+.plaque-desc {
+  font-size: 16px;
+  line-height: 2;
+  color: var(--color-text);
+  margin-bottom: 24px;
+}
+
+/* 引用块：左侧红色竖线 */
+.plaque-quote {
+  border-left: 3px solid var(--color-vermilion);
+  padding-left: 24px;
+  font-size: 16px;
+  line-height: 2.2;
+  letter-spacing: 0.06em;
+  margin-bottom: 16px;
+  color: var(--color-text);
+}
+
+/* 出处来源：前方红色圆点 */
+.plaque-source {
+  font-size: 14px;
+  color: var(--color-text-mute);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.plaque-source::before {
+  content: '';
+  display: inline-block;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--color-vermilion);
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+
+/* 展厅底部导航：上一厅/下一厅 */
+.hall-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 720px;
+  margin: 0 auto;
+  border-top: 1px solid var(--color-border);
+  padding: 48px 0;
+}
+.hall-nav a {
+  font-size: 14px;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: color 0.25s;
+}
+.hall-nav a:hover { color: var(--color-vermilion); }
+.hall-nav a.disabled { opacity: 0.3; pointer-events: none; }
+.hall-nav .counter { font-size: 13px; color: var(--color-text-mute); }
+
+/* ============================================================
+   9. 展厅II 紙短情長 — 图片画廊 + 灯箱
+   ============================================================ */
+
+/* 4列画廊网格 */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  max-width: 1100px;
+  margin: 0 auto 64px;
+  padding: 0 24px;
+}
+@media (max-width: 900px) { .gallery-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 500px) { .gallery-grid { grid-template-columns: 1fr; } }
+
+.gallery-item {
+  aspect-ratio: 3/4;
+  border-radius: 3px;
+  box-shadow: 0 3px 12px rgba(26, 20, 16, 0.06);
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+  border: 1px solid var(--color-border);
+}
+.gallery-item:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 24px rgba(26, 20, 16, 0.12);
+}
+.gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+
+/* 灯箱：全屏遮罩 + 居中图片 */
+.lightbox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.85);
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+}
+.lightbox.open { display: flex; animation: fadeIn 0.3s; }
+.lightbox img {
+  max-height: 88vh;
+  max-width: 92vw;
+  object-fit: contain;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  border-radius: 2px;
+}
+.lightbox-close {
+  position: fixed; top: 20px; right: 24px;
+  width: 40px; height: 40px;
+  background: rgba(255, 255, 255, 0.08);
+  border: none; color: #fff; font-size: 24px;
+  cursor: pointer; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1001;
+}
+.lightbox-prev, .lightbox-next {
+  position: fixed; top: 50%; transform: translateY(-50%);
+  width: 48px; height: 48px;
+  background: rgba(255, 255, 255, 0.08);
+  border: none; color: #fff; font-size: 28px;
+  cursor: pointer; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1001;
+}
+.lightbox-prev { left: 24px; }
+.lightbox-next { right: 24px; }
+.lightbox-counter {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  color: rgba(255, 255, 255, 0.6); font-size: 14px; z-index: 1001;
+}
+
+/* ============================================================
+   10. 展厅V 百人千言 — 筛选器 + 肖像墙 + 详情弹窗
+   ============================================================ */
+
+/* 页面头部 */
+.wall-header {
+  text-align: center;
+  padding: 136px 24px 40px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.wall-title { font-family: var(--font-hand); font-size: 50px; color: var(--color-ink); margin-bottom: 12px; }
+.wall-subtitle { font-size: 14px; color: var(--color-vermilion); letter-spacing: 2px; margin-bottom: 24px; }
+.wall-desc { font-size: 15px; line-height: 2; color: var(--color-text); margin-bottom: 8px; }
+.wall-disclaimer { font-size: 12px; color: var(--color-text-mute); margin-top: 16px; opacity: 0.8; }
+
+/* 筛选器组：药丸式按钮 */
+.filters { max-width: 1200px; margin: 0 auto; padding: 0 24px 24px; }
+.filter-group { margin-bottom: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.filter-label { font-size: 12px; color: var(--color-text-mute); margin-right: 4px; min-width: 48px; }
+
+.filter-btn {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-mute);
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.filter-btn.active {
+  background: rgba(179, 74, 58, 0.06);
+  color: var(--color-vermilion);
+  border-color: var(--color-vermilion);
+}
+.filter-btn:hover { border-color: var(--color-vermilion); }
+
+/* 肖像卡片网格 */
+.portrait-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 12px 80px;
+}
+@media (min-width: 900px) { .portrait-grid { grid-template-columns: repeat(5, 1fr); } }
+@media (max-width: 500px) { .portrait-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.portrait-card {
+  aspect-ratio: 5/7;
+  cursor: pointer;
+  overflow: hidden;
+  border-radius: 2px;
+  transition: transform 0.3s;
+  background: var(--color-paper);
+}
+.portrait-card:hover { transform: scale(1.03); }
+.portrait-card-img { height: 70%; overflow: hidden; }
+.portrait-card-img img { width: 100%; height: 100%; object-fit: cover; }
+.portrait-card-info { height: 30%; padding: 4px 6px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1px; }
+.portrait-name { font-family: var(--font-hand); font-size: 13px; color: var(--color-ink); }
+.portrait-meta { font-size: 8px; color: var(--color-text-mute); }
+.portrait-type { font-size: 8px; color: var(--color-vermilion); }
+
+/* ----- 人物详情弹窗（仿原站双栏布局）----- */
+
+/**
+ * 【功能说明】
+ * 点击肖像后弹出全屏详情弹窗，左侧为肖像卡片（含加入收藏按钮），
+ * 右侧为竖排信件内容（仿传统僑批格式），底部有翻页导航。
+ * 参考原站的side-by-side布局效果。
+ */
+.person-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.8);
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+}
+.person-modal.open { display: flex; animation: fadeIn 0.3s; }
+
+/* 弹窗内容区：左右双栏 */
+.person-modal-content {
+  background: var(--color-paper);
+  max-width: 900px;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  max-height: 85vh;
+}
+
+@media (max-width: 700px) {
+  .person-modal-content { flex-direction: column; max-height: 90vh; overflow-y: auto; }
+}
+
+/* 左侧：肖像卡片 */
+.person-profile-panel {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
+  background: var(--color-bg);
+  border-right: 1px solid var(--color-border);
+}
+@media (max-width: 700px) {
+  .person-profile-panel { width: 100%; border-right: none; border-bottom: 1px solid var(--color-border); }
+}
+
+.person-profile-img {
+  width: 180px;
+  height: 252px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 16px rgba(26, 20, 16, 0.1);
+}
+.person-profile-name { font-family: var(--font-hand); font-size: 24px; color: var(--color-ink); margin-bottom: 4px; }
+.person-profile-role { font-size: 13px; color: var(--color-text-mute); margin-bottom: 8px; }
+.person-profile-meta { font-size: 13px; color: var(--color-vermilion); margin-bottom: 4px; }
+.person-profile-to { font-size: 13px; color: var(--color-text); margin-bottom: 16px; }
+
+/* 加入收藏按钮 */
+.btn-favorite {
+  padding: 8px 24px;
+  font-size: 13px;
+  font-family: inherit;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-favorite:hover { border-color: var(--color-vermilion); color: var(--color-vermilion); }
+.btn-favorite.favorited {
+  background: rgba(179, 74, 58, 0.06);
+  color: var(--color-vermilion);
+  border-color: var(--color-vermilion);
+}
+
+/* 右侧：竖排信件内容 */
+.person-letter-panel {
+  flex: 1;
+  padding: 32px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 信件容器：仿古信纸样式（米黄纸底 + 红褐色边框 + 竖排文字） */
+.letter-scroll {
+  background: #f5edd4;  /* 仿古纸张色 */
+  border: 1px solid #c9a87c;  /* 旧纸边框色 */
+  border-radius: 2px;
+  padding: 32px 24px 24px;
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  position: relative;
+  /* 双线框效果 */
+  box-shadow: inset 0 0 0 4px #f5edd4, inset 0 0 0 5px #c9a87c;
+}
+
+/* 竖排文字区域：多列竖排，从右向左阅读 */
+.letter-vertical {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-size: 15px;
+  line-height: 2.4;
+  letter-spacing: 0.12em;
+  color: #2a2118;
+  column-gap: 8px;
+  min-height: 280px;
+  white-space: pre-wrap;
+  font-family: var(--font-kai);
+  /* 列间分隔线 */
+  column-rule: 1px solid rgba(201, 168, 124, 0.3);
+}
+
+/* 银信印章：右下角红色方形印章 */
+.letter-stamp {
+  width: 36px;
+  height: 36px;
+  background: var(--color-vermilion);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-family: var(--font-hand);
+  border-radius: 2px;
+  margin-top: 12px;
+  align-self: flex-end;
+  /* 印章微倾斜效果 */
+  transform: rotate(-3deg);
+  opacity: 0.9;
+}
+
+/* 翻页导航 */
+.letter-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+.letter-nav button {
+  padding: 6px 16px;
+  font-size: 13px;
+  font-family: inherit;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.letter-nav button:hover { border-color: var(--color-vermilion); color: var(--color-vermilion); }
+.letter-nav button:disabled { opacity: 0.3; cursor: default; }
+.letter-nav button:disabled:hover { border-color: var(--color-border); color: var(--color-text); }
+.letter-nav-counter { font-size: 13px; color: var(--color-text-mute); }
+
+.letter-nav-back {
+  display: block;
+  text-align: center;
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--color-text-mute);
+  cursor: pointer;
+}
+.letter-nav-back:hover { color: var(--color-vermilion); }
+
+.person-modal-close {
+  position: absolute;
+  top: 12px; right: 12px;
+  width: 36px; height: 36px;
+  background: rgba(0, 0, 0, 0.5);
+  border: none; color: #fff; font-size: 20px;
+  cursor: pointer; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 10;
+}
+
+/* ============================================================
+   11. 展厅VI 銀信局 — 左表单 + 右实时预览
+   ============================================================ */
+
+/**
+ * 【功能说明】
+ * 银信局采用分屏布局：
+ * - 左侧为表单区（寄信人、收信人、心意、附件、日期、配图选择）
+ * - 右侧为实时预览区（信纸预览 + 信封预览），随表单输入动态更新
+ * - 参考原站 https://qbgogtgc47664.ok.kimi.link/#/hall/6 的样式
+ */
+.hall6-header { text-align: center; padding: 136px 24px 40px; }
+.hall6-sub { font-size: 14px; color: var(--color-text-mute); letter-spacing: 0.08em; margin-bottom: 16px; }
+.hall6-title { font-family: var(--font-hand); font-size: 40px; color: var(--color-ink); margin-bottom: 12px; letter-spacing: 0.04em; }
+.hall6-desc { font-size: 16px; color: var(--color-text); }
+
+/* 分屏容器 */
+.hall6-split {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: start;
+}
+@media (max-width: 1023px) {
+  .hall6-split { grid-template-columns: 1fr; }
+}
+
+/* 表单区域 */
+.letter-form { width: 100%; }
+.form-group { margin-bottom: 28px; }
+.form-label { font-size: 14px; color: var(--color-text); margin-bottom: 8px; display: block; letter-spacing: 0.02em; }
+/* 表单提示文字（如"至多選五句，已選 0/5"） */
+.form-hint { font-size: 12px; color: var(--color-text-mute); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+/* 日期三列布局 */
+.form-row-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.form-input, .form-select {
+  background: var(--color-paper);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--color-text);
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+.form-input:focus, .form-select:focus { border-color: var(--color-vermilion); }
+
+/* 切换按钮组（心意/附件） */
+.toggle-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.toggle-btn {
+  padding: 8px 18px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-mute);
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.toggle-btn.active {
+  background: rgba(179, 74, 58, 0.06);
+  color: var(--color-vermilion);
+  border-color: var(--color-vermilion);
+}
+.toggle-btn:hover { border-color: var(--color-vermilion); }
+/* 附件按钮略小字号 */
+.toggle-group-sm .toggle-btn { padding: 6px 14px; font-size: 13px; }
+
+/* 配图选择网格 — 4列网格，每项含缩略图和标签 */
+.illust-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.illust-item {
+  border-radius: 2px;
+  cursor: pointer;
+  overflow: hidden;
+  border: 2px solid transparent;
+  padding: 6px;
+  background: var(--color-paper);
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.illust-item.active {
+  border-color: var(--color-vermilion);
+  background: rgba(179, 74, 58, 0.06);
+}
+.illust-item img {
+  width: 100%;
+  aspect-ratio: 1/1;
+  object-fit: contain;
+  border-radius: 2px;
+}
+.illust-item span {
+  font-size: 12px;
+  color: var(--color-text-mute);
+  margin-top: 4px;
+}
+.illust-item.active span {
+  color: var(--color-vermilion);
+}
+
+/* 移动端预览按钮 — 仅在移动端显示，桌面端隐藏 */
+.preview-btn-mobile {
+  display: none;
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  font-size: 15px;
+  font-family: inherit;
+  background: rgba(179, 74, 58, 0.06);
+  border: 1px solid var(--color-vermilion);
+  color: var(--color-vermilion);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.preview-btn-mobile:hover { background: rgba(179, 74, 58, 0.12); }
+@media (max-width: 1023px) {
+  .preview-btn-mobile { display: block; }
+}
+
+/* 右侧预览面板 */
+.preview-panel {
+  position: sticky;
+  top: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+@media (max-width: 1023px) {
+  .preview-panel { position: static; }
+}
+
+/* 默认提示语：未填写时显示的引导文字 */
+.preview-prompt {
+  text-align: center;
+  padding: 48px 16px;
+  color: var(--color-text-mute);
+  font-size: 15px;
+  line-height: 1.8;
+  background: var(--color-paper);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+/* ----- 信纸预览区 ----- */
+.letter-preview-box {
+  border: none;
+  padding: 0;
+}
+.letter-preview-title {
+  font-family: var(--font-kai);
+  font-size: 14px;
+  color: var(--color-text-mute);
+  margin-bottom: 12px;
+  letter-spacing: 0.08em;
+}
+
+/**
+ * 信纸主体样式 — 参考原站
+ * 米色古纸底色 + 多色渐变模拟旧纸质感
+ * 红色内边框(3px) + 毛边裁剪效果
+ */
+.letter-paper {
+  position: relative;
+  background: linear-gradient(135deg, #e8dcc4, #d4c4a0);
+  padding: 20px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+/* 信纸内层 — 模拟古纸纹理 + 内阴影 */
+.letter-paper-inner {
+  position: relative;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(245,237,212,0.6) 0%, transparent 60%),
+    radial-gradient(ellipse at 70% 80%, rgba(230,218,192,0.4) 0%, transparent 60%),
+    linear-gradient(180deg, #f0e6d0, #e4d8be);
+  min-height: 320px;
+  padding: 36px 28px;
+  box-shadow: inset 0 0 30px rgba(120, 80, 40, 0.1);
+  border-radius: 1px;
+}
+/* 红色内边框 — 传统僑批的红框格式 */
+.letter-paper-inner::before {
+  content: '';
+  position: absolute;
+  inset: 18px 16px;
+  border: 3px solid var(--color-vermilion);
+  pointer-events: none;
+}
+
+/* 信纸文字 — 横排书写，手写体 */
+.letter-text {
+  font-family: var(--font-hand);
+  font-size: 18px;
+  line-height: 2.2;
+  letter-spacing: 0.1em;
+  color: #1a1a1a;
+  position: relative;
+  z-index: 1;
+}
+.letter-text .letter-greeting {
+  display: block;
+  margin-bottom: 16px;
+}
+.letter-text .letter-body {
+  display: block;
+  margin-bottom: 16px;
+  text-indent: 2em;
+}
+.letter-text .letter-sign {
+  display: block;
+  text-align: right;
+  margin-top: 20px;
+}
+.letter-text .letter-date {
+  display: block;
+  text-align: right;
+  font-size: 14px;
+  margin-top: 4px;
+  color: #4a4a4a;
+}
+
+/* 信纸底部装饰配图 — 灰度化处理 */
+.letter-paper-illust {
+  position: absolute;
+  bottom: 4%;
+  left: 4%;
+  width: 55%;
+  opacity: 0.25;
+  transform: rotate(-4deg);
+  filter: grayscale(100%);
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+/* ----- 信封预览区 ----- */
+.envelope-preview-box {
+  border: none;
+  padding: 0;
+}
+.envelope-preview-title {
+  font-family: var(--font-kai);
+  font-size: 14px;
+  color: var(--color-text-mute);
+  margin-bottom: 12px;
+  letter-spacing: 0.08em;
+}
+
+/**
+ * 信封样式 — 参考原站复杂的三栏设计
+ * 左侧：收信人信息（米色底 + 竖排 + 印章）
+ * 中间：红色「僑批」大字
+ * 右侧：寄信人信息（米色底 + 竖排 + 装饰）
+ */
+.envelope-display {
+  position: relative;
+  display: flex;
+  aspect-ratio: 9/14;
+  border-radius: 2px;
+  overflow: hidden;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.25);
+  background: linear-gradient(160deg, #d4aa72 0%, #c49a62 60%, #ba9258 100%);
+}
+
+/* 信封左栏 — 收信人 + 印章 + 银信标签 */
+.envelope-left {
+  width: 22%;
+  background: linear-gradient(180deg, #f0e6d0, #e4d8be);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 6px;
+  position: relative;
+}
+/* 左上角「银信」标签 — 金属质感 */
+.envelope-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  border: 1.5px solid #4a4a4a;
+  background: linear-gradient(135deg, #d4d2cc, #a8a6a0, #c2c0ba);
+  color: #2a2a2a;
+  border-radius: 2px;
+  margin-bottom: 8px;
+}
+/* 收信人 — 竖排大字 */
+.envelope-receiver {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  font-size: 28px;
+  letter-spacing: 8px;
+  color: #1a1410;
+  font-family: var(--font-hand);
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+/* 收信人称谓 */
+.envelope-receiver-sub {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  font-size: 16px;
+  letter-spacing: 4px;
+  color: #1a1410;
+  font-family: var(--font-kai);
+  margin-top: 4px;
+}
+/* 左下角圆形印章 */
+.envelope-seal {
+  width: 44px;
+  height: 44px;
+  border: 2px solid #c03525;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-7deg);
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+.envelope-seal-inner {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #c03525;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: #c03525;
+  font-family: var(--font-hand);
+}
+
+/* 信封中栏 — 红色背景 + 「僑批」大字 */
+.envelope-center {
+  width: 50%;
+  background: linear-gradient(170deg, #c03525, #9e2515);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+/* 大字「僑批」 */
+.envelope-qiaopi {
+  font-family: var(--font-hand);
+  font-size: 56px;
+  font-weight: 900;
+  color: #1a1a1a;
+  writing-mode: vertical-rl;
+  letter-spacing: 8px;
+  -webkit-text-stroke: 1px #1a1a1a;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+/* 信封右栏 — 寄信人 + 装饰文字 */
+.envelope-right {
+  width: 28%;
+  background: linear-gradient(180deg, #f0e6d0, #e4d8be);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 6px;
+  position: relative;
+}
+/* 右上角斜条纹装饰 */
+.envelope-right::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 40px;
+  height: 40px;
+  background: repeating-linear-gradient(
+    -48deg,
+    transparent,
+    transparent 3px,
+    rgba(120,80,40,0.1) 3px,
+    rgba(120,80,40,0.1) 5px
+  );
+}
+/* 右侧竖排装饰文字 */
+.envelope-deco-text {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  font-size: 22px;
+  letter-spacing: 4px;
+  color: #1a1410;
+  font-family: var(--font-hand);
+  padding: 6px 2px;
+  border: 1.5px solid rgba(120,80,40,0.2);
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+/* 右侧寄信人信息 */
+.envelope-sender {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  font-size: 20px;
+  letter-spacing: 2px;
+  color: #1a1410;
+  font-family: var(--font-hand);
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+/* ----- 操作按钮 ----- */
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 8px;
+}
+.btn-action {
+  padding: 10px 24px;
+  font-size: 14px;
+  font-family: inherit;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+/* 下载信纸按钮 — 硃红实心 */
+.btn-download-letter {
+  background: var(--color-vermilion);
+  color: #fff;
+  border: 1px solid var(--color-vermilion);
+}
+.btn-download-letter:hover { opacity: 0.9; }
+.btn-download-letter:disabled {
+  background: #d4cfc6;
+  border-color: #d4cfc6;
+  color: #a8a29e;
+  cursor: not-allowed;
+}
+/* 下载信封按钮 — 硃红描边 */
+.btn-download-envelope {
+  background: transparent;
+  color: var(--color-vermilion);
+  border: 1px solid var(--color-vermilion);
+}
+.btn-download-envelope:hover { background: rgba(179,74,58,0.06); }
+.btn-download-envelope:disabled {
+  color: #a8a29e;
+  border-color: #d4cfc6;
+  cursor: not-allowed;
+}
+/* 分享按钮 — 灰色描边（始终可用） */
+.btn-share {
+  background: transparent;
+  color: var(--color-text-mute);
+  border: 1px solid var(--color-border);
+}
+.btn-share:hover { border-color: var(--color-text); color: var(--color-text); }
+
+/* ============================================================
+   12. 我的收藏页面 — 收藏卡片网格
+   ============================================================ */
+
+/**
+ * 【功能说明】
+ * 收藏页面展示用户从百人千言展厅收藏的人物卡片。
+ * 使用localStorage持久化存储。空状态显示引导文案。
+ */
+.archive-page {
+  padding: 136px 24px 80px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.archive-title {
+  font-family: var(--font-hand);
+  font-size: 48px;
+  color: var(--color-ink);
+  text-align: center;
+  margin-bottom: 8px;
+}
+.archive-sub {
+  font-size: 14px;
+  color: var(--color-text-mute);
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+/* 收藏卡片网格 */
+.favorites-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+@media (min-width: 900px) { .favorites-grid { grid-template-columns: repeat(5, 1fr); } }
+@media (max-width: 500px) { .favorites-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.fav-card {
+  background: var(--color-paper);
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.3s;
+  border: 1px solid var(--color-border);
+}
+.fav-card:hover { transform: scale(1.03); }
+.fav-card-img { aspect-ratio: 5/7; overflow: hidden; }
+.fav-card-img img { width: 100%; height: 100%; object-fit: cover; }
+.fav-card-info { padding: 8px; text-align: center; }
+.fav-card-name { font-family: var(--font-hand); font-size: 14px; color: var(--color-ink); }
+.fav-card-meta { font-size: 9px; color: var(--color-text-mute); margin-top: 2px; }
+.fav-card-remove {
+  display: block;
+  margin: 4px auto 8px;
+  padding: 2px 12px;
+  font-size: 11px;
+  font-family: inherit;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--color-text-mute);
+  cursor: pointer;
+}
+.fav-card-remove:hover { border-color: var(--color-vermilion); color: var(--color-vermilion); }
+
+/* 空状态 */
+.archive-empty {
+  text-align: center;
+  padding: 80px 0;
+}
+.archive-empty-msg { font-size: 14px; color: var(--color-text-mute); margin-bottom: 32px; }
+
+.btn-back {
+  padding: 10px 28px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--color-text);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-back:hover { border-color: var(--color-vermilion); color: var(--color-vermilion); }
+
+/* ============================================================
+   13. 关于页面
+   ============================================================ */
+.about-page {
+  min-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120px 24px;
+  text-align: center;
+}
+.about-line { height: 1px; background: var(--color-border); width: 40px; margin-bottom: 64px; }
+.about-label { font-size: 13px; color: var(--color-text-mute); letter-spacing: 0.08em; margin-bottom: 32px; }
+.about-body { max-width: 560px; font-size: 14px; line-height: 2; color: var(--color-text); }
+
+/* ============================================================
+   14. 平面图弹窗 — SVG节点交互
+   ============================================================ */
+.floorplan-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(26, 20, 16, 0.6);
+  align-items: center;
+  justify-content: center;
+}
+.floorplan-overlay.open { display: flex; animation: fadeIn 0.3s; }
+
+.floorplan-modal {
+  background: var(--color-paper);
+  max-width: 600px;
+  width: 90%;
+  border-radius: 8px;
+  padding: 40px;
+  border: 1px solid var(--color-border);
+  position: relative;
+}
+.floorplan-close {
+  position: absolute;
+  top: 16px; right: 16px;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: var(--color-text-mute);
+}
+.floorplan-title {
+  font-family: var(--font-hand);
+  font-size: 28px;
+  text-align: center;
+  margin-bottom: 32px;
+  color: var(--color-ink);
+}
+
+.floorplan-svg { width: 100%; }
+.floorplan-svg .node-circle { transition: all 0.2s; cursor: pointer; }
+.floorplan-svg .node-circle:hover { fill: rgba(179, 74, 58, 0.1); }
+
+/* ============================================================
+   15. 页脚
+   ============================================================ */
+.footer {
+  border-top: 1px solid var(--color-border);
+  padding: 32px 24px;
+  text-align: center;
+}
+.footer-line1 { font-size: 13px; color: var(--color-text-mute); letter-spacing: 0.26px; margin-bottom: 6px; }
+.footer-line2 { font-size: 12px; color: var(--color-text-mute); opacity: 0.7; }

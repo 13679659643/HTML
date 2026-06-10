@@ -2,20 +2,34 @@
 <html lang="zh-CN">
 <head>
   <script>
-  (function() {
-    // 设置密码
-    const PASSWORD = '010910';
-    
-    // 检查是否已经验证过（sessionStorage 关闭页面后失效）
-    if (sessionStorage.getItem('auth') !== 'ok') {
-      const input = prompt('请输入访问密码：');
-      if (input !== PASSWORD) {
-        document.body.innerHTML = '<h1>访问被拒绝</h1>';
-        throw new Error('Access denied');
-      }
+  // 密码验证模块
+  // 使用 sessionStorage 记住验证状态，关闭页面后失效
+  var _PASSWORD = '010910';
+  var _needsAuth = sessionStorage.getItem('auth') !== 'ok';
+
+  // 密码验证函数（供页面调用）
+  function checkAuth() {
+    var input = document.getElementById('authInput').value;
+    var errorEl = document.getElementById('authError');
+    if (input === _PASSWORD) {
       sessionStorage.setItem('auth', 'ok');
+      var overlay = document.getElementById('authOverlay');
+      overlay.style.opacity = '0';
+      overlay.style.transform = 'scale(1.05)';
+      setTimeout(function() {
+        overlay.remove();
+        document.body.style.overflow = '';
+      }, 400);
+    } else {
+      errorEl.textContent = '\u274C 密码错误，请重试';
+      errorEl.style.opacity = '1';
+      document.getElementById('authInput').classList.add('shake');
+      document.getElementById('authInput').value = '';
+      setTimeout(function() {
+        document.getElementById('authInput').classList.remove('shake');
+      }, 500);
     }
-  })();
+  }
 </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -58,11 +72,6 @@
     .options-row{display:flex;gap:24px;margin-bottom:28px;align-items:center;flex-wrap:wrap}
     .option-group{display:flex;align-items:center;gap:10px}
     .option-group label{font-weight:600;white-space:nowrap;color:var(--text-muted);font-size:.95rem}
-    .style-cards{display:flex;gap:10px;flex-wrap:wrap}
-    .style-card{padding:8px 16px;border-radius:10px;border:2px solid var(--border);background:var(--bg-card);cursor:pointer;transition:all .3s;display:flex;align-items:center;gap:8px;font-size:.9rem;color:var(--text-muted)}
-    .style-card:hover{border-color:var(--primary)}
-    .style-card.active{border-color:var(--primary);background:rgba(99,102,241,.15);color:var(--text)}
-    .style-dot{width:14px;height:14px;border-radius:50%;display:inline-block}
     .card{background:var(--bg-card);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);padding:32px;margin-bottom:28px;backdrop-filter:blur(12px);box-shadow:0 4px 24px rgba(0,0,0,.2);transition:transform .2s,box-shadow .2s}
     .card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.3)}
     .card-title{font-size:1.2rem;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:10px}
@@ -138,9 +147,52 @@
     .btn-tip{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);background:#1e293b;color:#e2e8f0;padding:10px 14px;border-radius:8px;font-size:.8rem;font-weight:400;white-space:pre-line;width:260px;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);opacity:0;visibility:hidden;transition:all .25s;z-index:100;pointer-events:none;line-height:1.5}
     .btn-tip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#1e293b}
     .btn-with-tip:hover .btn-tip{opacity:1;visibility:visible;bottom:calc(100% + 6px)}
+    /* 密码验证页面 */
+    #authOverlay{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 50%,#0f172a 100%);opacity:1;transform:scale(1);transition:all .4s ease}
+    #authOverlay::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 40%,rgba(99,102,241,.15) 0%,transparent 60%),radial-gradient(ellipse at 70% 60%,rgba(245,158,11,.1) 0%,transparent 60%);animation:authBg 8s ease-in-out infinite alternate}
+    @keyframes authBg{from{opacity:.6}to{opacity:1}}
+    .auth-card{position:relative;background:rgba(30,41,59,.8);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:48px 40px;text-align:center;max-width:400px;width:90%;box-shadow:0 24px 80px rgba(0,0,0,.5),0 0 40px rgba(99,102,241,.1);animation:authIn .5s ease}
+    @keyframes authIn{from{opacity:0;transform:translateY(20px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+    .auth-logo{font-size:3.5rem;margin-bottom:16px;filter:drop-shadow(0 4px 12px rgba(99,102,241,.3))}
+    .auth-title{font-size:1.5rem;font-weight:800;background:linear-gradient(135deg,#a5b4fc,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+    .auth-desc{color:#94a3b8;font-size:.95rem;margin-bottom:28px}
+    .auth-input-wrap{display:flex;gap:8px;margin-bottom:12px}
+    .auth-input{flex:1;padding:14px 18px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(15,23,42,.6);color:#f1f5f9;font-size:1rem;outline:none;transition:all .3s;letter-spacing:2px}
+    .auth-input:focus{border-color:#6366f1;box-shadow:0 0 20px rgba(99,102,241,.2)}
+    .auth-input::placeholder{color:#64748b;letter-spacing:0;font-size:.9rem}
+    .auth-btn{padding:14px 20px;border-radius:14px;border:none;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;font-size:1.2rem;font-weight:700;cursor:pointer;transition:all .3s;box-shadow:0 4px 16px rgba(99,102,241,.3)}
+    .auth-btn:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(99,102,241,.4)}
+    .auth-btn:active{transform:translateY(0)}
+    .auth-error{color:#f87171;font-size:.85rem;opacity:0;transition:opacity .3s;min-height:20px}
+    .auth-input.shake{animation:shake .5s ease}
+    @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
   </style>
 </head>
 <body>
+  <!-- 密码验证遮罩（需要验证时才显示） -->
+  <div id="authOverlay" style="display:none"></div>
+  <script>
+  if (_needsAuth) {
+    var _ao = document.getElementById('authOverlay');
+    _ao.style.display = 'flex';
+    _ao.innerHTML =
+      '<div class="auth-card">' +
+        '<div class="auth-logo">\uD83D\uDD12</div>' +
+        '<h2 class="auth-title">AI \u667a\u80fd\u603b\u7ed3 PPT \u751f\u6210\u5668</h2>' +
+        '<p class="auth-desc">\u8bf7\u8f93\u5165\u8bbf\u95ee\u5bc6\u7801\u4ee5\u7ee7\u7eed</p>' +
+        '<div class="auth-input-wrap">' +
+          '<input type="password" id="authInput" class="auth-input" placeholder="\u8bf7\u8f93\u5165\u5bc6\u7801..." autocomplete="off" />' +
+          '<button class="auth-btn" id="authBtn" onclick="checkAuth()">\u2192</button>' +
+        '</div>' +
+        '<div class="auth-error" id="authError"></div>' +
+      '</div>';
+    document.body.style.overflow = 'hidden';
+    document.getElementById('authInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') checkAuth();
+    });
+    setTimeout(function() { document.getElementById('authInput').focus(); }, 300);
+  }
+  </script>
   <div class="container">
     <header>
       <h1>AI 智能总结 PPT 生成器</h1>
@@ -327,26 +379,7 @@ const STYLE_THEMES = {
       titleBar: '1D4ED8'    // 标题栏背景（预留）
     }
   },
-  // 科技紫：深紫底色 + 紫色强调，科技感强
-  tech: {
-    name: '科技紫',
-    c: {
-      primary: '4C1D95', accent: 'A855F7', dark: '1A0A2E',
-      text: 'F5F3FF', muted: 'A78BFA', white: 'FFFFFF',
-      bg1: '2E1065', bg2: '4C1D95', contentBg: '3B1A6E',
-      accentBar: 'C084FC', titleBar: '7C3AED'
-    }
-  },
-  // 简约白：白底黑字 + 灰色线条，适合打印和简约风格
-  minimal: {
-    name: '简约白',
-    c: {
-      primary: '1F2937', accent: '6B7280', dark: 'FFFFFF',
-      text: '1F2937', muted: '6B7280', white: '111827',
-      bg1: 'F9FAFB', bg2: 'F3F4F6', contentBg: 'FFFFFF',
-      accentBar: 'D1D5DB', titleBar: 'E5E7EB'
-    }
-  }
+
 };
 
 // ==================== 文件上传处理 ====================
@@ -417,24 +450,6 @@ async function parsePPTX(file) {
   return text || '[PPT内容为空或无法提取文本]';
 }
 
-// ============================================================================
-// 模型供应商配置（PROVIDERS）
-//
-// 所有供应商均兼容 OpenAI Chat Completions API 协议，因此可以用统一的
-// fetch 请求格式调用。关键参数说明：
-//   - name:       显示名称
-//   - endpoint:   完整的 Chat Completions 端点 URL
-//   - model:      模型标识符（必须与供应商文档中的有效模型名一致）
-//   - placeholder: API Key 输入框的提示文字
-//   - info:       模型信息显示在页面上
-//
-// ⚠️ 重要提醒：
-//   1. 本工具为纯前端应用，直接从浏览器调用远程 API。
-//      大多数 API 服务商未配置 CORS 响应头，可能导致浏览器拦截请求。
-//      如遇到此问题，请通过「CORS 代理」功能或部署后端代理解决。
-//   2. API Key 仅存储在浏览器 localStorage 中，不会发送到任何第三方。
-//      但请注意：在前端暴露 API Key 存在安全风险，建议使用测试 Key。
-// ============================================================================
 // ============================================================================
 // 默认 API Key（通义千问）
 // 页面首次打开时自动填入，无需手动输入
@@ -691,22 +706,7 @@ function onProviderChange(slot) {
 }
 
 // ============================================================================
-// 通用大模型 API 调用函数（增强错误处理）
-//
-// 所有供应商统一使用 OpenAI Chat Completions 格式：
-//   请求：POST endpoint
-//   Header: Authorization: Bearer <API_KEY>
-//   Body: { model, messages: [{role, content}], temperature, max_tokens }
-//   响应: { choices: [{ message: { role, content } }] }
-//
-// CORS 代理说明：
-//   浏览器直接从前端页面调用远程 API 时，由于同源策略（Same-Origin Policy），
-//   如果目标 API 服务器没有返回 Access-Control-Allow-Origin 响应头，
-//   浏览器会拦截响应，表现为"网络错误"或"Failed to fetch"。
-//   解决方案：
-//     1. 配置 CORS 代理（如 cors-anywhere、nginx 反向代理）
-//     2. 在浏览器中安装 CORS 解除插件（仅限开发测试）
-//     3. 将本工具部署到后端服务中转发 API 请求
+// 通用大模型 API 调用函数
 // ============================================================================
 // ============================================================================
 // 公共 CORS 代理列表（file:// 协议下自动使用）
@@ -720,8 +720,9 @@ const PUBLIC_CORS_PROXIES = [
 // 上次成功使用的公共代理索引（避免每次都从第一个试）
 let _lastWorkingProxyIdx = -1;
 
-async function callLLMAPI(systemPrompt, userContent, slot) {
+async function callLLMAPI(systemPrompt, userContent, slot, options) {
   slot = slot || 'A';
+  options = options || {};
   const apiKey = document.getElementById('apiKey' + slot).value.trim();
   const provider = getProvider(slot);
   const providerKey = document.getElementById('providerSelect' + slot).value;
@@ -746,17 +747,25 @@ async function callLLMAPI(systemPrompt, userContent, slot) {
       { role: 'user', content: userContent }
     ],
     temperature: 0.3,
-    max_tokens: 8192
+    max_tokens: options.maxTokens || 8192
   };
 
   // --- 构建代理 URL 候选列表 ---
-  // 优先级：localhost内置代理 > 手动CORS代理 > 公共CORS代理 > 直连
-  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  // 优先级：本地服务器/Cloudflare Pages 内置代理 > 手动CORS代理 > 公共CORS代理 > 直连
+  const hostname = window.location.hostname;
+  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+  // 检测是否部署在 Cloudflare Pages 上（域名以 .pages.dev 结尾）
+  // Cloudflare Pages 的 functions/ 目录会自动提供 /api-proxy 代理函数
+  const isCloudflarePages = hostname.endsWith('.pages.dev');
+  const hasBuiltinProxy = isLocalhost || isCloudflarePages;
   const corsProxy = document.getElementById('corsProxy').value.trim();
   const proxyCandidates = []; // [{ name, url }]
 
-  if (isLocalhost) {
-    proxyCandidates.push({ name: '本地服务器', url: '/api-proxy?url=' + encodeURIComponent(provider.endpoint) });
+  if (hasBuiltinProxy) {
+    // 本地服务器 (server.ps1) 或 Cloudflare Pages (functions/) 内置代理
+    // 请求格式：/api-proxy?url=https://dashscope.aliyuncs.com/...
+    const proxyName = isCloudflarePages ? 'Cloudflare代理' : '本地服务器';
+    proxyCandidates.push({ name: proxyName, url: '/api-proxy?url=' + encodeURIComponent(provider.endpoint) });
   }
   if (corsProxy) {
     const proxyBase = corsProxy.endsWith('/') ? corsProxy : corsProxy + '/';
@@ -982,30 +991,73 @@ async function handleGeneratePPT() {
     const sourceLabel = summaryMarkdown ? '已有总结' : '原始内容';
     updateProgress(10, '正在调用「模型 B: ' + providerB.name + '」生成 PPT 结构（基于' + sourceLabel + '）...');
 
-    // 构建 system prompt，包含自定义提示词
+    // ==========================================================================
+    // Model B System Prompt - PPT 页面规划方案生成
+    // 融合 SKILL.md 方法论：需求分析→视觉风格指南→页面规划→风格一致性
+    // 参考布局模式：封面/目录/章节/左右分栏/三列/数据卡片/中心聚焦/结尾
+    // ==========================================================================
     let pptSystem =
-      '你是一个顶级PPT设计专家。基于提供的内容，输出PPT页面结构（仅输出JSON数组，不要其他文字和markdown代码块标记）。\n\n' +
-      '基本要求：\n' +
-      '1. 总共5-8页，第1页封面，最后一页感谢页\n' +
-      '2. 每页不超过5个要点\n' +
-      '3. 每个要点精炼有力，控制在15-40字，适合演示展示\n' +
-      '4. 标题简洁醒目，每页标题不超过12字\n';
+      '你是PPT规划大师，擅长生成完整的PPT页面规划方案，提供系统化的视觉设计指导。\n' +
+      '基于提供的内容，输出PPT页面结构JSON（仅输出JSON数组，不要其他文字和markdown代码块标记）。\n\n' +
 
-    // 添加用户自定义提示词
+      '## 工作流程\n' +
+      '1. 需求分析：确认使用场景（汇报/演讲/培训/课件），确定主题类型和风格基调\n' +
+      '2. 视觉风格指南：选择合适的色彩方案、字体风格和布局原则\n' +
+      '3. 页面规划：划分页面结构（封面→目录→章节页→内容页→结尾），规划每页布局模式\n' +
+      '4. 风格一致性：所有章节页保持统一设计，同类内容页使用相同布局\n\n' +
+
+      '## 页面类型与布局模式\n' +
+      '- cover: 封面页 → 全屏渐变背景+标题叠加+装饰元素，含title主标题、subtitle副标题、author作者、date日期\n' +
+      '- toc: 目录页 → 编号+标题列表，含chapters数组[{title}]\n' +
+      '- section: 章节过渡页 → 深色背景+大号编号+章节标题+副标题，含number编号(如"01")、title标题、subtitle副标题\n' +
+      '- content: 内容页 → 标题栏+要点列表+底部注释，含bullets要点数组、sections分组[{title,items}]、note注释\n' +
+      '- left-right: 左右分栏(图40%+文60%) → 适合图文混排，含sections[{title,items:bullet数组}]\n' +
+      '- three-column: 三列布局 → 每列等宽等间距，含columns数组[{icon图标emoji,title,subtitle,items:要点数组}]\n' +
+      '- data-cards: 数据卡片 → 横向3个数据卡片+阴影效果，含cards数组[{label标签,value数值(强调色),icon图标emoji}]、note\n' +
+      '- ending: 结尾页 → 居中感谢+联系信息，含subtitle、contact联系信息\n\n' +
+
+      '## 视觉风格指南(通过visualStyleGuide字段指定)\n' +
+      '商务蓝(默认): 主色#1E3A8A深蓝 | 强调#F59E0B橙黄 | 辅助#F3F4F6浅灰 | 背景#1E293B\n' +
+      '科技风: 主色#0A1628深蓝黑 | 强调#06B6D4青 | 高亮#8B5CF6紫 | 背景#0F172A\n' +
+      '教育培训: 主色#065F46深绿 | 强调#8B5CF6紫 | 辅助#ECFDF5淡绿 | 背景#1E293B\n' +
+      '活力创意: 主色#7C3AED紫 | 强调#EC4899粉 | 辅助#FDE68A暖黄 | 背景#1E1B4B\n\n' +
+
+      '## 规划原则\n' +
+      '1. 总页数8-15页，内容少可5-8页，内容丰富可12-15页\n' +
+      '2. 章节页+内容页交替：每个章节用section页开头，后跟2-3个内容页\n' +
+      '3. 同类页面布局一致：所有章节页统一设计，同类内容页用相同布局\n' +
+      '4. 每页3-5个要点，每个要点精炼有力(15-40字)，适合演示展示\n' +
+      '5. 关键数据用强调色突出，可在items中用【数据】标注重要数字\n' +
+      '6. 信息层次清晰：标题→副标题→正文→注释，建立视觉层次\n' +
+      '7. 留白充足不拥挤，避免文字堆砌，每页内容要精而不多\n' +
+      '8. 所有文字使用中文，专业但易懂\n\n' +
+
+      '## JSON输出格式\n' +
+      '[\n' +
+      '  {"visualStyleGuide":{"theme":"business","primary":"1E3A8A","accent":"F59E0B","secondary":"F3F4F6","bg":"1E293B","text":"F1F5F9","muted":"94A3B8"}},\n' +
+      '  {"type":"cover","title":"...","subtitle":"...","author":"...","date":"..."},\n' +
+      '  {"type":"toc","title":"目录","chapters":[{"title":"一、..."},{"title":"二、..."}]},\n' +
+      '  {"type":"section","number":"01","title":"...","subtitle":"..."},\n' +
+      '  {"type":"left-right","title":"...","sections":[{"title":"...","items":["...","..."]}]},\n' +
+      '  {"type":"three-column","title":"...","columns":[{"icon":"📊","title":"...","subtitle":"...","items":["..."]}]},\n' +
+      '  {"type":"data-cards","title":"...","cards":[{"label":"...","value":"99.9%","icon":"📈"}],"note":"..."},\n' +
+      '  {"type":"ending","title":"感谢聆听","subtitle":"...","contact":"..."}\n' +
+      ']\n\n' +
+
+      '只输出JSON数组，不输出其他任何文字。';
+
+    // 添加用户自定义提示词（融入 PPT 提示词输入框的内容）
     if (customPrompt) {
-      pptSystem += '\n用户额外要求：' + customPrompt + '\n';
+      pptSystem += '\n\n用户额外要求：' + customPrompt;
     }
-
-    pptSystem += '\nJSON格式：\n' +
-      '[\n  {"type":"cover","title":"主标题","subtitle":"副标题/日期"},\n' +
-      '  {"type":"content","title":"页面标题","bullets":["要点1","要点2","要点3"],"note":"可选补充"},\n' +
-      '  {"type":"ending","title":"感谢观看","subtitle":"副标题"}\n]\n\n' +
-      '内容：\n' + sourceContent;
+    // 将输入内容追加到 system prompt 末尾
+    pptSystem += '\n\n内容：\n' + sourceContent;
 
     let pptStructure;
     try {
       updateProgress(40, 'AI 正在生成 PPT 结构...');
-      const pptJson = await callLLMAPI(pptSystem, '请基于以上内容生成PPT页面结构JSON', 'B');
+      // 支持更大的输出（丰富的PPT结构需要更多token）
+      const pptJson = await callLLMAPI(pptSystem, '请基于以上内容生成PPT页面结构JSON', 'B', { maxTokens: 16384 });
       const jsonMatch = pptJson.match(/\[[\s\S]*\]/);
       if (!jsonMatch) throw new Error('未找到 JSON 数组');
       pptStructure = JSON.parse(jsonMatch[0]);
@@ -1019,10 +1071,24 @@ async function handleGeneratePPT() {
     parsedSlides = pptStructure;
     updateProgress(90, 'PPT 结构已就绪！');
 
-    // 显示 PPT 结构预览（将 JSON 转为简单的 Markdown 列表）
-    const preview = pptStructure.map(s =>
-      '**' + s.title + '**' + (s.bullets ? '\n- ' + s.bullets.join('\n- ') : '')
-    ).join('\n\n');
+    // 显示 PPT 结构预览（将丰富的 JSON 结构转为可读 Markdown）
+    const preview = pptStructure.map((s, i) => {
+      const pg = '第' + (i + 1) + '页';
+      if (s.type === 'visualStyleGuide') return '**🎨 视觉风格** | 主题: ' + (s.theme || '默认') + ' | 主色: #' + (s.primary || '1E3A8A') + ' | 强调: #' + (s.accent || 'F59E0B');
+      if (s.type === 'cover') return pg + ' [封面] **' + s.title + '**\n' + (s.subtitle || '') + (s.author ? ' | ' + s.author : '');
+      if (s.type === 'toc') return pg + ' [目录] **' + s.title + '**\n' + (s.chapters || []).map((c, j) => '- ' + (j + 1) + '. ' + c.title).join('\n');
+      if (s.type === 'section') return pg + ' [章节] **' + (s.number || '') + '. ' + s.title + '**\n*' + (s.subtitle || '') + '*';
+      if (s.type === 'data-cards') return pg + ' [数据] **' + s.title + '**\n' + (s.cards || []).map(c => '- ' + (c.icon || '📊') + ' ' + c.label + ': **' + c.value + '**').join('\n') + (s.note ? '\n> ' + s.note : '');
+      if (s.type === 'three-column') return pg + ' [三列] **' + s.title + '**\n' + (s.columns || []).map(c => '- ' + (c.icon || '📌') + ' **' + c.title + '**: ' + (c.items || []).join('、')).join('\n');
+      if (s.type === 'left-right') return pg + ' [图文] **' + s.title + '**\n' + (s.sections || []).map(sec => '**' + sec.title + '**\n' + (sec.items || []).map(it => '- ' + it).join('\n')).join('\n');
+      if (s.type === 'ending') return pg + ' [结尾] **' + s.title + '**\n' + (s.subtitle || '') + (s.contact ? '\n联系: ' + s.contact : '');
+      // content 及其他类型
+      let txt = pg + ' **' + s.title + '**';
+      if (s.bullets) txt += '\n' + s.bullets.map(b => '- ' + b).join('\n');
+      if (s.sections) txt += '\n' + s.sections.map(sec => '**' + sec.title + '**\n' + (sec.items || []).map(it => '- ' + it).join('\n')).join('\n');
+      if (s.note) txt += '\n> ' + s.note;
+      return txt;
+    }).join('\n\n');
     document.getElementById('resultTitle').textContent = 'PPT 结构预览（共 ' + pptStructure.length + ' 页）';
     document.getElementById('resultIcon').textContent = '📊';
     document.getElementById('summaryPreview').innerHTML = marked.parse(preview);
@@ -1041,15 +1107,35 @@ async function handleGeneratePPT() {
   }
 }
 
-/** 本地降级解析：将 Markdown 文本转为 PPT 结构（当 AI 返回格式异常时使用） */
+/** 本地降级解析：将 Markdown 文本转为 PPT 结构（当 AI 返回格式异常时使用）
+ *  支持 section/three-column 等新页面类型，生成更丰富的 PPT 结构 */
 function buildFallbackStructure(md) {
-  const slides = [{ type: 'cover', title: '内容总结', subtitle: 'AI 智能总结' }];
-  let title = '', bullets = [];
+  const slides = [
+    { type: 'visualStyleGuide', theme: 'business', primary: '1E3A8A', accent: 'F59E0B', secondary: 'F3F4F6', bg: '1E293B', text: 'F1F5F9', muted: '94A3B8' },
+    { type: 'cover', title: '内容总结', subtitle: 'AI 智能总结' }
+  ];
+  let title = '', bullets = [], sectionNum = 0;
+  const h2List = [];
+  // 第一遍扫描收集所有 H2 标题用于目录页
   for (const line of md.split('\n')) {
-    if (line.startsWith('# ') && !line.startsWith('## ')) slides[0].title = line.replace('# ', '').trim();
+    if (line.startsWith('## ')) h2List.push(line.replace('## ', '').trim());
+  }
+  if (h2List.length >= 2) {
+    slides.push({ type: 'toc', title: '目录', chapters: h2List.map(h => ({ title: h })) });
+  }
+  // 第二遍扫描生成页面结构
+  for (const line of md.split('\n')) {
+    if (line.startsWith('# ') && !line.startsWith('## ')) {
+      slides[1].title = line.replace('# ', '').trim();
+    }
     if (line.startsWith('## ')) {
       if (title && bullets.length) slides.push({ type: 'content', title, bullets: [...bullets] });
       title = line.replace('## ', '').trim(); bullets = [];
+      sectionNum++;
+      // 每两个 H2 插入一个章节过渡页
+      if (sectionNum <= 5) {
+        slides.push({ type: 'section', number: String(sectionNum).padStart(2, '0'), title, subtitle: '' });
+      }
     } else if (/^\d+\.\s/.test(line) || line.startsWith('- ') || line.startsWith('* ')) {
       bullets.push(line.replace(/^\d+\.\s*/, '').replace(/^[-*]\s*/, '').trim());
     } else if (line.startsWith('### ')) {
@@ -1058,7 +1144,7 @@ function buildFallbackStructure(md) {
     }
   }
   if (title && bullets.length) slides.push({ type: 'content', title, bullets: [...bullets] });
-  slides.push({ type: 'ending', title: '感谢观看', subtitle: 'Powered by AI' });
+  slides.push({ type: 'ending', title: '感谢聆听', subtitle: 'Powered by AI' });
   return slides;
 }
 
@@ -1076,71 +1162,392 @@ function generatePPT(slides) {
   const pptx = new PptxGenJS();
   pptx.layout = 'LAYOUT_WIDE'; // 16:9 宽屏布局
 
-  // 默认使用商务蓝风格（STYLE_THEMES.business）
-  const theme = STYLE_THEMES.business;
-  const C = theme.c;
-  const isMinimal = false;
+  // ==========================================================================
+  // 颜色方案：优先使用 AI 生成的 visualStyleGuide，否则回退到默认商务蓝
+  // 参考 style-guide-template.md 中的色彩方案结构
+  // ==========================================================================
+  const vg = slides.find(s => s.visualStyleGuide) || {};
+  const defaultC = STYLE_THEMES.business.c;
+  const C = {
+    primary:   vg.primary   || defaultC.primary,    // 主色（封面背景、底部色带）
+    accent:    vg.accent    || defaultC.accent,     // 强调色（装饰条、关键数据）
+    dark:      vg.bg        || defaultC.dark,       // 内容页背景
+    text:      vg.text      || defaultC.text,       // 正文颜色
+    muted:     vg.muted     || defaultC.muted,      // 次要文字
+    white:     'FFFFFF',
+    bg1:       vg.bg        || defaultC.bg1,        // 封面/结尾页背景
+    bg2:       vg.primary   || defaultC.bg2,        // 标题栏背景
+    contentBg: '1A2F4A',
+    accentBar: vg.accent    || defaultC.accentBar,  // 顶部装饰条
+    titleBar:  vg.primary   || defaultC.titleBar
+  };
+  const themeName = vg.theme || '商务蓝';
+
+  // 页码计数器（跳过封面、目录、章节、结尾页）
+  let pageNum = 0;
 
   slides.forEach((slide, idx) => {
+    // 跳过视觉风格指南（它不是真正的幻灯片）
+    if (slide.visualStyleGuide || slide.type === 'visualStyleGuide') return;
+
     const s = pptx.addSlide();
 
+    // ========================================================================
+    // 封面页 (cover) - 全屏渐变背景 + 标题叠加 + 装饰元素
+    // 参考布局：全屏图片背景 + 标题叠加，居中对齐
+    // ========================================================================
     if (slide.type === 'cover') {
-      // ---- 封面页 ----
       s.background = { color: C.bg1 };
+      // 顶部装饰条（强调色，薄而精致）
       s.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 0, w: '100%', h: 0.08, fill: { color: C.accentBar } });
+      // 左侧竖条装饰（参考示例文档中的橙色装饰线条）
       s.addShape(pptx.shapes.RECTANGLE, { x: 0.8, y: 1.5, w: 0.06, h: 2.5, fill: { color: C.accent } });
-      s.addText(slide.title, {
+      // 主标题：白色，42pt，居左
+      s.addText(slide.title || '', {
         x: 1.2, y: 1.8, w: 10, h: 1.2,
-        fontSize: 40, fontFace: 'Microsoft YaHei', color: C.white, bold: true
+        fontSize: 42, fontFace: 'Microsoft YaHei', color: C.white, bold: true
       });
+      // 副标题：次要色，18pt
       s.addText(slide.subtitle || '', {
         x: 1.2, y: 3.2, w: 10, h: 0.6,
         fontSize: 18, fontFace: 'Microsoft YaHei', color: C.muted
       });
+      // 作者信息（如有）
+      if (slide.author) {
+        s.addText(slide.author, {
+          x: 1.2, y: 4.0, w: 10, h: 0.5,
+          fontSize: 16, fontFace: 'Microsoft YaHei', color: C.muted
+        });
+      }
+      // 日期（如有）
+      if (slide.date) {
+        s.addText(slide.date, {
+          x: 1.2, y: 4.5, w: 10, h: 0.4,
+          fontSize: 14, fontFace: 'Microsoft YaHei', color: C.muted
+        });
+      }
+      // 底部色带（主色）
       s.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 7.0, w: '100%', h: 0.5, fill: { color: C.primary } });
+      // 底部橙色装饰线（3条水平线，参考示例文档第1页）
+      s.addShape(pptx.shapes.RECTANGLE, { x: 0.8, y: 6.5, w: 2.0, h: 0.04, fill: { color: C.accent } });
+      s.addShape(pptx.shapes.RECTANGLE, { x: 0.8, y: 6.6, w: 1.4, h: 0.04, fill: { color: C.accent } });
+      s.addShape(pptx.shapes.RECTANGLE, { x: 0.8, y: 6.7, w: 0.8, h: 0.04, fill: { color: C.accent } });
 
-    } else if (slide.type === 'ending') {
-      // ---- 结尾页 ----
-      s.background = { color: C.bg1 };
-      s.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 0, w: '100%', h: 0.08, fill: { color: C.accentBar } });
-      s.addText(slide.title, {
-        x: 0, y: 2.5, w: '100%', h: 1.5,
-        fontSize: 44, fontFace: 'Microsoft YaHei', color: C.white, bold: true, align: 'center'
-      });
-      s.addText(slide.subtitle || '', {
-        x: 0, y: 4.2, w: '100%', h: 0.8,
-        fontSize: 16, fontFace: 'Microsoft YaHei', color: C.muted, align: 'center'
-      });
-      s.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 7.0, w: '100%', h: 0.5, fill: { color: C.primary } });
-
-    } else {
-      // ---- 内容页 ----
+    // ========================================================================
+    // 目录页 (toc) - 编号 + 标题列表
+    // 参考布局：左侧编号右侧文字列表，橙色圆形背景编号
+    // ========================================================================
+    } else if (slide.type === 'toc') {
       s.background = { color: C.dark };
       s.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 0, w: '100%', h: 0.06, fill: { color: C.accentBar } });
-      s.addText(String(idx + 1), { x: 12.0, y: 7.0, w: 0.8, h: 0.4, fontSize: 11, color: C.muted, align: 'right' });
+      // 页面标题
+      s.addText(slide.title || '目录', {
+        x: 0.8, y: 0.4, w: 11, h: 0.9,
+        fontSize: 32, fontFace: 'Microsoft YaHei', color: C.white, bold: true
+      });
+      // 目录条目（每行包含编号圆形 + 标题）
+      var chapters = slide.chapters || [];
+      chapters.forEach((ch, i) => {
+        var yPos = 1.8 + i * 0.85;
+        // 编号圆形（强调色背景 + 白色数字）
+        s.addShape(pptx.shapes.OVAL, {
+          x: 1.2, y: yPos, w: 0.5, h: 0.5,
+          fill: { color: C.accent }
+        });
+        s.addText(String(i + 1), {
+          x: 1.2, y: yPos, w: 0.5, h: 0.5,
+          fontSize: 16, fontFace: 'Microsoft YaHei', color: C.white, bold: true, align: 'center', valign: 'middle'
+        });
+        // 章节标题
+        s.addText(ch.title, {
+          x: 2.0, y: yPos, w: 9, h: 0.5,
+          fontSize: 20, fontFace: 'Microsoft YaHei', color: C.text, valign: 'middle'
+        });
+        // 分隔线（浅灰色，最后一个不显示）
+        if (i < chapters.length - 1) {
+          s.addShape(pptx.shapes.RECTANGLE, {
+            x: 2.0, y: yPos + 0.65, w: 9.5, h: 0.01,
+            fill: { color: C.muted }, rectRadius: 0.01
+          });
+        }
+      });
+
+    // ========================================================================
+    // 章节过渡页 (section) - 深色背景 + 大号编号 + 章节标题 + 副标题
+    // 参考布局：左侧大号编号 + 右侧章节标题，视觉冲击力强
+    // ========================================================================
+    } else if (slide.type === 'section') {
+      s.background = { color: C.primary };
+      // 左侧超大编号（白色，120pt，20%透明度效果通过浅色模拟）
+      s.addText(slide.number || String(idx).padStart(2, '0'), {
+        x: 0.5, y: 1.5, w: 4.0, h: 4.5,
+        fontSize: 120, fontFace: 'Microsoft YaHei', color: '3A5A8A', bold: true, valign: 'middle'
+      });
+      // 右侧章节标题（白色，42pt，加粗）
+      s.addText(slide.title || '', {
+        x: 5.0, y: 2.5, w: 7, h: 1.5,
+        fontSize: 42, fontFace: 'Microsoft YaHei', color: C.white, bold: true
+      });
+      // 右侧副标题（白色，20pt，半透明效果）
+      s.addText(slide.subtitle || '', {
+        x: 5.0, y: 4.0, w: 7, h: 0.8,
+        fontSize: 20, fontFace: 'Microsoft YaHei', color: '8AB4E8'
+      });
+      // 右下角装饰元素（强调色三角形/线条）
+      s.addShape(pptx.shapes.RECTANGLE, { x: 11.5, y: 6.5, w: 1.5, h: 0.06, fill: { color: C.accent } });
+      s.addShape(pptx.shapes.RECTANGLE, { x: 12.0, y: 6.6, w: 1.0, h: 0.06, fill: { color: C.accent } });
+
+    // ========================================================================
+    // 数据卡片页 (data-cards) - 横向 3 个数据卡片 + 阴影效果
+    // 参考布局：上下分层 + 中心聚焦，卡片白色背景+圆角+阴影
+    // ========================================================================
+    } else if (slide.type === 'data-cards') {
+      s.background = { color: C.dark };
+      s.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 0, w: '100%', h: 0.06, fill: { color: C.accentBar } });
+      s.addText(String(++pageNum), { x: 12.0, y: 7.0, w: 0.8, h: 0.4, fontSize: 11, color: C.muted, align: 'right' });
+      // 标题区域（主色背景，白色文字）
       s.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 0.06, w: '100%', h: 1.2, fill: { color: C.bg2 } });
       s.addShape(pptx.shapes.RECTANGLE, { x: 0.6, y: 0.3, w: 0.06, h: 0.7, fill: { color: C.accent } });
-      s.addText(slide.title, {
+      s.addText(slide.title || '', {
         x: 0.8, y: 0.2, w: 11, h: 0.9,
         fontSize: 26, fontFace: 'Microsoft YaHei', color: C.white, bold: true
       });
-      // 要点列表
-      if (slide.bullets && slide.bullets.length) {
-        const bulletColor = isMinimal ? '374151' : C.text;       // 简约白用深色文字
-        const bulletCode = isMinimal ? '25AA' : '25CF';           // 简约白用空心圆点
-        const bulletTexts = slide.bullets.map(b => ({
-          text: b,
-          options: {
-            fontSize: 16, fontFace: 'Microsoft YaHei', color: bulletColor,
-            bullet: { code: bulletCode }, breakType: 'n',
-            paraSpaceBefore: 8, paraSpaceAfter: 8
-          }
-        }));
-        s.addText(bulletTexts, {
-          x: 1.0, y: 1.6, w: 11, h: 4.8, valign: 'top', lineSpacingMultiple: 1.3
+      // 横向 3 个数据卡片
+      var cards = slide.cards || [];
+      var cardW = 3.4;
+      var cardGap = 0.5;
+      var startX = (13.33 - cards.length * cardW - (cards.length - 1) * cardGap) / 2;
+      cards.forEach((card, i) => {
+        var cx = startX + i * (cardW + cardGap);
+        // 卡片背景（白色圆角矩形 + 阴影效果）
+        s.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
+          x: cx, y: 1.8, w: cardW, h: 4.0, rectRadius: 0.15,
+          fill: { color: 'FFFFFF' },
+          shadow: { type: 'outer', blur: 8, offset: 3, color: '000000', opacity: 0.25 }
+        });
+        // 图标（顶部居中，大号）
+        s.addText(card.icon || '📊', {
+          x: cx, y: 2.1, w: cardW, h: 0.9,
+          fontSize: 36, align: 'center'
+        });
+        // 数值（强调色，48pt，加粗）
+        s.addText(card.value || '', {
+          x: cx, y: 3.0, w: cardW, h: 1.2,
+          fontSize: 48, fontFace: 'Microsoft YaHei', color: C.accent, bold: true, align: 'center'
+        });
+        // 标签（灰色，16pt）
+        s.addText(card.label || '', {
+          x: cx, y: 4.3, w: cardW, h: 0.8,
+          fontSize: 16, fontFace: 'Microsoft YaHei', color: '6B7280', align: 'center'
+        });
+      });
+      // 底部说明
+      if (slide.note) {
+        s.addText(slide.note, {
+          x: 1.0, y: 6.3, w: 11, h: 0.5,
+          fontSize: 13, fontFace: 'Microsoft YaHei', color: C.muted, italic: true, align: 'center'
         });
       }
-      // 补充说明（页面底部斜体小字）
+
+    // ========================================================================
+    // 三列布局页 (three-column) - 每列等宽等间距，卡片风格
+    // 参考布局：三列布局，图标+标题+要点列表
+    // ========================================================================
+    } else if (slide.type === 'three-column') {
+      s.background = { color: C.dark };
+      s.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 0, w: '100%', h: 0.06, fill: { color: C.accentBar } });
+      s.addText(String(++pageNum), { x: 12.0, y: 7.0, w: 0.8, h: 0.4, fontSize: 11, color: C.muted, align: 'right' });
+      // 页面标题（居中）
+      s.addText(slide.title || '', {
+        x: 0, y: 0.3, w: '100%', h: 0.9,
+        fontSize: 28, fontFace: 'Microsoft YaHei', color: C.white, bold: true, align: 'center'
+      });
+      // 三列卡片
+      var cols = slide.columns || [];
+      var colW = 3.6;
+      var colGap = 0.35;
+      var colStartX = (13.33 - cols.length * colW - (cols.length - 1) * colGap) / 2;
+      cols.forEach((col, i) => {
+        var cx = colStartX + i * (colW + colGap);
+        // 列卡片背景（浅色圆角矩形 + 阴影）
+        s.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
+          x: cx, y: 1.5, w: colW, h: 5.0, rectRadius: 0.12,
+          fill: { color: C.contentBg },
+          shadow: { type: 'outer', blur: 6, offset: 2, color: '000000', opacity: 0.2 }
+        });
+        // 图标（顶部居中，大号）
+        s.addText(col.icon || '📌', {
+          x: cx, y: 1.7, w: colW, h: 0.8,
+          fontSize: 32, align: 'center'
+        });
+        // 列标题（强调色，18pt，加粗）
+        s.addText(col.title || '', {
+          x: cx + 0.2, y: 2.5, w: colW - 0.4, h: 0.6,
+          fontSize: 18, fontFace: 'Microsoft YaHei', color: C.accent, bold: true, align: 'center'
+        });
+        // 列副标题（次要色，13pt）
+        if (col.subtitle) {
+          s.addText(col.subtitle, {
+            x: cx + 0.2, y: 3.1, w: colW - 0.4, h: 0.5,
+            fontSize: 13, fontFace: 'Microsoft YaHei', color: C.muted, align: 'center', italic: true
+          });
+        }
+        // 要点列表（白色，14pt）
+        var items = col.items || [];
+        if (items.length) {
+          var itemTexts = items.map(function(it) {
+            return {
+              text: it,
+              options: {
+                fontSize: 14, fontFace: 'Microsoft YaHei', color: C.text,
+                bullet: { code: '25CF' }, breakType: 'n',
+                paraSpaceBefore: 5, paraSpaceAfter: 5
+              }
+            };
+          });
+          s.addText(itemTexts, {
+            x: cx + 0.3, y: 3.7, w: colW - 0.6, h: 2.5,
+            valign: 'top', lineSpacingMultiple: 1.2
+          });
+        }
+      });
+
+    // ========================================================================
+    // 结尾页 (ending) - 居中感谢 + 联系信息
+    // 参考布局：居中感谢布局，感谢语+副标题+联系方式
+    // ========================================================================
+    } else if (slide.type === 'ending') {
+      s.background = { color: C.bg1 };
+      s.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 0, w: '100%', h: 0.08, fill: { color: C.accentBar } });
+      // 主标题（居中，44pt）
+      s.addText(slide.title || '感谢聆听', {
+        x: 0, y: 2.2, w: '100%', h: 1.5,
+        fontSize: 44, fontFace: 'Microsoft YaHei', color: C.white, bold: true, align: 'center'
+      });
+      // 副标题（英文翻译/补充）
+      s.addText(slide.subtitle || '', {
+        x: 0, y: 3.8, w: '100%', h: 0.8,
+        fontSize: 16, fontFace: 'Microsoft YaHei', color: C.muted, align: 'center'
+      });
+      // 联系信息
+      if (slide.contact) {
+        s.addText(slide.contact, {
+          x: 0, y: 4.8, w: '100%', h: 0.5,
+          fontSize: 14, fontFace: 'Microsoft YaHei', color: C.muted, align: 'center'
+        });
+      }
+      s.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 7.0, w: '100%', h: 0.5, fill: { color: C.primary } });
+      // 底部装饰线
+      s.addShape(pptx.shapes.RECTANGLE, { x: 5.5, y: 6.3, w: 2.5, h: 0.04, fill: { color: C.accent } });
+      s.addShape(pptx.shapes.RECTANGLE, { x: 5.8, y: 6.4, w: 1.8, h: 0.04, fill: { color: C.accent } });
+
+    // ========================================================================
+    // 左右分栏页 (left-right) / 内容页 (content) - 默认布局
+    // 参考布局：左右分栏(图40%+文60%) 或 标题栏+要点列表
+    // ========================================================================
+    } else {
+      s.background = { color: C.dark };
+      s.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 0, w: '100%', h: 0.06, fill: { color: C.accentBar } });
+      s.addText(String(++pageNum), { x: 12.0, y: 7.0, w: 0.8, h: 0.4, fontSize: 11, color: C.muted, align: 'right' });
+      // 标题栏（主色背景 + 左侧强调色竖条 + 白色标题）
+      s.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 0.06, w: '100%', h: 1.2, fill: { color: C.bg2 } });
+      s.addShape(pptx.shapes.RECTANGLE, { x: 0.6, y: 0.3, w: 0.06, h: 0.7, fill: { color: C.accent } });
+      s.addText(slide.title || '', {
+        x: 0.8, y: 0.2, w: 11, h: 0.9,
+        fontSize: 26, fontFace: 'Microsoft YaHei', color: C.white, bold: true
+      });
+
+      // ---- 左右分栏布局：左侧色块 + 右侧分组要点 ----
+      if (slide.type === 'left-right' && slide.sections) {
+        // 左侧色块（模拟图片区域）
+        s.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
+          x: 0.6, y: 1.6, w: 4.4, h: 4.8, rectRadius: 0.1,
+          fill: { color: C.contentBg },
+          shadow: { type: 'outer', blur: 4, offset: 2, color: '000000', opacity: 0.15 }
+        });
+        s.addText(slide.title || '', {
+          x: 0.8, y: 3.3, w: 4.0, h: 1.0,
+          fontSize: 22, fontFace: 'Microsoft YaHei', color: C.muted, align: 'center', italic: true
+        });
+        // 右侧分组要点
+        var secY = 1.6;
+        (slide.sections || []).forEach(function(sec) {
+          // 分组标题（强调色，17pt）
+          s.addText(sec.title || '', {
+            x: 5.4, y: secY, w: 7.2, h: 0.55,
+            fontSize: 17, fontFace: 'Microsoft YaHei', color: C.accent, bold: true
+          });
+          secY += 0.55;
+          var items = sec.items || [];
+          if (items.length) {
+            var itemTexts = items.map(function(it) {
+              return {
+                text: it,
+                options: {
+                  fontSize: 14, fontFace: 'Microsoft YaHei', color: C.text,
+                  bullet: { code: '25CF' }, breakType: 'n',
+                  paraSpaceBefore: 4, paraSpaceAfter: 4
+                }
+              };
+            });
+            var blockH = items.length * 0.42;
+            s.addText(itemTexts, {
+              x: 5.6, y: secY, w: 7.0, h: blockH,
+              valign: 'top', lineSpacingMultiple: 1.2
+            });
+            secY += blockH + 0.25;
+          }
+        });
+
+      // ---- 带分组的内容页 ----
+      } else if (slide.sections) {
+        var secY2 = 1.6;
+        (slide.sections || []).forEach(function(sec) {
+          s.addText(sec.title || '', {
+            x: 1.0, y: secY2, w: 11, h: 0.55,
+            fontSize: 18, fontFace: 'Microsoft YaHei', color: C.accent, bold: true
+          });
+          secY2 += 0.55;
+          var items = sec.items || [];
+          if (items.length) {
+            var itemTexts = items.map(function(it) {
+              return {
+                text: it,
+                options: {
+                  fontSize: 15, fontFace: 'Microsoft YaHei', color: C.text,
+                  bullet: { code: '25CF' }, breakType: 'n',
+                  paraSpaceBefore: 5, paraSpaceAfter: 5
+                }
+              };
+            });
+            var blockH = items.length * 0.45;
+            s.addText(itemTexts, {
+              x: 1.2, y: secY2, w: 10.8, h: blockH,
+              valign: 'top', lineSpacingMultiple: 1.2
+            });
+            secY2 += blockH + 0.2;
+          }
+        });
+
+      // ---- 普通要点列表 ----
+      } else if (slide.bullets && slide.bullets.length) {
+        var bulletTexts = slide.bullets.map(function(b) {
+          return {
+            text: b,
+            options: {
+              fontSize: 16, fontFace: 'Microsoft YaHei', color: C.text,
+              bullet: { code: '25CF' }, breakType: 'n',
+              paraSpaceBefore: 8, paraSpaceAfter: 8
+            }
+          };
+        });
+        s.addText(bulletTexts, {
+          x: 1.0, y: 1.6, w: 11, h: 4.8,
+          valign: 'top', lineSpacingMultiple: 1.3
+        });
+      }
+
+      // 底部补充说明（斜体小字）
       if (slide.note) {
         s.addText(slide.note, {
           x: 1.0, y: 6.2, w: 11, h: 0.6,
@@ -1151,9 +1558,9 @@ function generatePPT(slides) {
   });
 
   // 生成并触发下载
-  const fileName = 'AI_PPT_' + theme.name + '_' + new Date().toISOString().slice(0, 10) + '.pptx';
+  var fileName = 'AI_PPT_' + themeName + '_' + new Date().toISOString().slice(0, 10) + '.pptx';
   pptx.writeFile({ fileName });
-  toast('「' + theme.name + '」风格 PPT 已开始下载！', 'success');
+  toast('「' + themeName + '」风格 PPT 已开始下载！共 ' + pageNum + ' 个内容页', 'success');
 }
 
 // ==================== UI 工具函数 ====================
@@ -1207,13 +1614,25 @@ document.getElementById('corsProxy').addEventListener('change', function() {
 });
 
 // CORS 代理处理
-const _isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+// 根据页面运行环境自动选择代理策略：
+//   1. localhost      → server.ps1 本地服务器代理
+//   2. *.pages.dev    → Cloudflare Pages Functions 代理
+//   3. file://        → 公共 CORS 代理（自动回退）
+//   4. 其他          → 手动配置或直连
+const _hostname = window.location.hostname;
+const _isLocalhost = _hostname === 'localhost' || _hostname === '127.0.0.1';
+const _isCloudflarePages = _hostname.endsWith('.pages.dev');
 const _isFile = window.location.protocol === 'file:';
 
 if (_isLocalhost) {
   // 通过本地服务器访问时，自动使用内置代理，清空 CORS 代理框
   document.getElementById('corsProxy').value = '';
   document.getElementById('proxyHint').textContent = '✅ 已检测到本地服务器，API 请求将自动代理，无需手动配置';
+  document.getElementById('proxyHint').style.color = 'var(--success)';
+} else if (_isCloudflarePages) {
+  // 部署在 Cloudflare Pages 上，使用 functions/api-proxy.js 代理
+  document.getElementById('corsProxy').value = '';
+  document.getElementById('proxyHint').textContent = '☁️ Cloudflare Pages 代理已启用，API 请求通过 Worker 函数自动转发，无需配置';
   document.getElementById('proxyHint').style.color = 'var(--success)';
 } else if (_isFile) {
   // 通过 file:// 直接打开 HTML 文件

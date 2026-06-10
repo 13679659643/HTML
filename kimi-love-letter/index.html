@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<!--
+  ============================================================
+  給阿嬤的情書 · 電影記憶館 — 主页面
+  ============================================================
+  
+  【项目概述】
+  致敬2026电影《給阿嬤的情書》的互动展览网站。
+  包含6个展厅 + 收藏系统 + 写信体验，共9个页面。
+  纯静态HTML/CSS/JS实现，无框架依赖。
+  
+  【页面结构】
+  - 固定导航栏（含进度条）
+  - 序廳（首页）：Hero视频 + 引言 + 导航卡片
+  - I 阿嬤的銀信：展品图 + 铭牌
+  - II 紙短情長：8封信件画廊 + 灯箱
+  - III 代筆人：展品图 + 铭牌
+  - IV 過番：展品图 + 铭牌
+  - V 百人千言：筛选器 + 100人肖像墙 + 详情弹窗
+  - VI 銀信局：写信表单 + 实时预览
+  - 我的收藏：收藏的人物卡片
+  - 關於：项目说明
+  
+  【技术栈】HTML5 + CSS3 + Vanilla JS + localStorage
+  @version 2.0
+-->
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>給阿嬤的情書 · 電影記憶館</title>
+  <!-- Google Fonts：书法字体 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.loli.net/css2?family=Ma+Shan+Zheng&family=Long+Cang&family=Liu+Jian+Mao+Cao&display=swap" rel="stylesheet">
+  <!-- LXGW WenKai TC：正文字体 -->
+  <link href="https://cdn.jsdmirror.com/npm/lxgw-wenkai-tc-web@latest/style.css" rel="stylesheet">
+  <!-- 主样式表 -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ===== 固定导航栏 ===== -->
+<!-- 包含9个导航链接 + 平面图按钮 + 滚动进度条 -->
+<nav class="navbar">
+  <div class="nav-inner">
+    <div class="nav-links">
+      <a data-route="/" class="active">序廳</a>
+      <a data-route="/hall/1">I 阿嬤的銀信</a>
+      <a data-route="/hall/2">II 紙短情長</a>
+      <a data-route="/hall/3">III 代筆人</a>
+      <a data-route="/hall/4">IV 過番</a>
+      <a data-route="/hall/5">V 百人千言</a>
+      <a data-route="/hall/6">VI 銀信局</a>
+      <a data-route="/archive">我的收藏</a>
+      <a data-route="/about">關於</a>
+    </div>
+    <button class="btn-floorplan" onclick="openFloorplan()">平面圖</button>
+  </div>
+  <div class="progress-bar"><div class="progress-bar-inner"></div></div>
+</nav>
+
+
+<!-- ===== 序廳（首页）===== -->
+<!-- Hero全屏视频 + 引言段落 + 三张导航卡片 -->
+<div id="page-home" class="page active">
+  <section class="hero">
+    <div class="hero-bg">
+      <video autoplay muted loop playsinline>
+        <source src="hero-1.mp4" type="video/mp4">
+      </video>
+    </div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <h1 class="hero-title">給阿嬤的情書 · 電影記憶館</h1>
+      <p class="hero-subtitle">影迷致敬版 · 一八八〇 ── 一九四五</p>
+    </div>
+    <button class="hero-enter" onclick="navigate('/hall/1')">↓ 進入序廳</button>
+  </section>
+
+  <section class="intro-section">
+    <p class="intro-text">「她說阿公一直在寫信。<br>後來才知道，那些信都是別人代筆的。<br>這座電影記憶館，把這部電影裡看不到的細節攤開：<br>銀信、批局、代筆人、紅頭船、和一百個曾經過番的影子。」</p>
+  </section>
+
+  <!-- 三张入口卡片 -->
+  <section class="cards-section">
+    <a class="card" onclick="navigate('/hall/1')">
+      <div class="card-icon"><svg viewBox="0 0 48 48" fill="none" stroke="rgb(179,74,58)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="14" width="36" height="28" rx="1"/><line x1="6" y1="20" x2="42" y2="20"/><line x1="24" y1="6" x2="24" y2="14"/><polygon points="10,14 24,6 38,14"/><rect x="14" y="26" width="8" height="16"/><rect x="26" y="26" width="8" height="16"/><line x1="18" y1="26" x2="18" y2="42"/><line x1="30" y1="26" x2="30" y2="42"/></svg></div>
+      <h3 class="card-title">推開門</h3>
+      <p class="card-subtitle">走進阿嬤的銀信世界</p>
+    </a>
+    <a class="card" onclick="navigate('/hall/5')">
+      <div class="card-icon"><svg viewBox="0 0 48 48" fill="none" stroke="rgb(179,74,58)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="16" height="16" rx="1"/><rect x="26" y="6" width="16" height="16" rx="1"/><rect x="6" y="26" width="16" height="16" rx="1"/><rect x="26" y="26" width="16" height="16" rx="1"/></svg></div>
+      <h3 class="card-title">直奔百人牆</h3>
+      <p class="card-subtitle">一百個過番者的聲音</p>
+    </a>
+    <a class="card" onclick="navigate('/hall/6')">
+      <div class="card-icon"><svg viewBox="0 0 48 48" fill="none" stroke="rgb(179,74,58)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="16" r="10"/><circle cx="16" cy="16" r="4"/><line x1="23" y1="23" x2="42" y2="42"/><line x1="36" y1="42" x2="42" y2="42"/><line x1="42" y1="36" x2="42" y2="42"/><line x1="33" y1="39" x2="37" y2="35"/></svg></div>
+      <h3 class="card-title">替阿嬤寫一封</h3>
+      <p class="card-subtitle">寫下你的銀信</p>
+    </a>
+  </section>
+
+  <footer class="footer">
+    <p class="footer-line1">給阿嬤的情書 · 電影記憶館 · 影迷致敬版</p>
+    <p class="footer-line2">致敬二〇二六《給阿嬤的情書》及聯合國教科文組織「僑批」檔案遺產</p>
+  </footer>
+</div>
+
+
+<!-- ===== Hall 1: 阿嬤的銀信 ===== -->
+<!-- 展品信件图 + 铭牌（标题/描述/引用/出处）-->
+<div id="page-hall-1" class="page">
+  <div class="hall-page">
+    <div class="exhibit-img"><img src="exhibits/letters/letter-1.jpg" alt="影片起始所念信件"></div>
+    <div class="plaque">
+      <div class="plaque-line"></div>
+      <div class="plaque-inner">
+        <p class="plaque-sub">I · 阿嬤的銀信</p>
+        <h2 class="plaque-title">阿嬤的銀信</h2>
+        <p class="plaque-desc">僑批，是潮汕與閩南遊子寄回家鄉的信。信裡夾錢，錢外裹紙。一封僑批，既是匯款，也是家書。阿嬤等了一輩子，等到的信，都是別人替阿公寫的。</p>
+        <blockquote class="plaque-quote">「她把那封新到的信，疊了又疊，藏進枕頭裡。」</blockquote>
+        <p class="plaque-source">原型出處：廣東省檔案館藏僑批文獻。</p>
+      </div>
+    </div>
+  </div>
+  <div class="hall-nav" style="padding:0 24px;">
+    <a class="disabled">← 上一廳</a>
+    <span class="counter">I / VI</span>
+    <a onclick="navigate('/hall/2')">下一廳 →</a>
+  </div>
+  <footer class="footer">
+    <p class="footer-line1">給阿嬤的情書 · 電影記憶館 · 影迷致敬版</p>
+    <p class="footer-line2">致敬二〇二六《給阿嬤的情書》及聯合國教科文組織「僑批」檔案遺產</p>
+  </footer>
+</div>
+
+
+<!-- ===== Hall 2: 紙短情長 ===== -->
+<!-- 8封信件画廊（可点击放大） + 灯箱 + 铭牌 -->
+<div id="page-hall-2" class="page">
+  <div class="hall-page" style="max-width:1100px;">
+    <div class="gallery-grid" id="gallery-grid"><!-- JS动态渲染 --></div>
+    <div class="plaque" style="max-width:720px; margin:0 auto 64px;">
+      <div class="plaque-line"></div>
+      <div class="plaque-inner">
+        <p class="plaque-sub">II · 紙短情長</p>
+        <h2 class="plaque-title">紙短情長</h2>
+        <p class="plaque-desc">一封僑批的標準結構——紅框包圍正文、豎排書寫、首段稱謂、末段落款、加蓋「銀信」朱印。紙短意豐，三五十字寫盡半生牽掛。當時一封僑批代書費不過三五分錢。</p>
+        <blockquote class="plaque-quote">「字，越寫越穩。」</blockquote>
+        <p class="plaque-source">原型出處：廣東省檔案館藏僑批文獻；字數限制源自當時批局「十六字內四分錢」計價規則。</p>
+      </div>
+    </div>
+  </div>
+  <div class="hall-nav" style="max-width:1100px; margin:0 auto; padding:0 24px;">
+    <a onclick="navigate('/hall/1')">← 上一廳</a>
+    <span class="counter">II / VI</span>
+    <a onclick="navigate('/hall/3')">下一廳 →</a>
+  </div>
+  <footer class="footer">
+    <p class="footer-line1">給阿嬤的情書 · 電影記憶館 · 影迷致敬版</p>
+    <p class="footer-line2">致敬二〇二六《給阿嬤的情書》及聯合國教科文組織「僑批」檔案遺產</p>
+  </footer>
+</div>
+
+
+<!-- ===== Hall 3: 代筆人 ===== -->
+<div id="page-hall-3" class="page">
+  <div class="hall-page">
+    <div class="exhibit-img square"><img src="exhibits/04-exhibit-3.jpg" alt="代筆人展品"></div>
+    <div class="plaque">
+      <div class="plaque-line"></div>
+      <div class="plaque-inner">
+        <p class="plaque-sub">III · 代筆人</p>
+        <h2 class="plaque-title">代筆人</h2>
+        <p class="plaque-desc">民國時期僑批業中專有一行：代書人。不識字的家眷把心裡話講給先生，由他化作文言寫上信箋。電影裡有一位代書人替已故的阿公，替了五十年的筆。寫到她不再去領的那天。</p>
+        <blockquote class="plaque-quote">「這支筆，是你阿公臨終那晚，交給我的。」</blockquote>
+        <p class="plaque-source">原型出處：真實僑批業中的「批腳·水客」行業。</p>
+      </div>
+    </div>
+  </div>
+  <div class="hall-nav" style="padding:0 24px;">
+    <a onclick="navigate('/hall/2')">← 上一廳</a>
+    <span class="counter">III / VI</span>
+    <a onclick="navigate('/hall/4')">下一廳 →</a>
+  </div>
+  <footer class="footer">
+    <p class="footer-line1">給阿嬤的情書 · 電影記憶館 · 影迷致敬版</p>
+    <p class="footer-line2">致敬二〇二六《給阿嬤的情書》及聯合國教科文組織「僑批」檔案遺產</p>
+  </footer>
+</div>
+
+
+<!-- ===== Hall 4: 過番 ===== -->
+<div id="page-hall-4" class="page">
+  <div class="hall-page">
+    <div class="exhibit-img square"><img src="exhibits/05-exhibit-4.jpg" alt="過番展品"></div>
+    <div class="plaque">
+      <div class="plaque-line"></div>
+      <div class="plaque-inner">
+        <p class="plaque-sub">IV · 過番</p>
+        <h2 class="plaque-title">過番</h2>
+        <p class="plaque-desc">「過番」是潮汕話，指渡海到南洋謀生。十九世紀末到二十世紀中，數百萬潮汕、福建男性乘紅頭船渡海，多去往泰國、馬來亞、新加坡、菲律賓。他們在番邦做苦力，把工錢一兩兩攢起，寫成僑批，寄回家。</p>
+        <blockquote class="plaque-quote">「你欠了一身賭債——有人對你說：你阿公是泰國的華人富豪。」</blockquote>
+        <p class="plaque-source">原型出處：紅頭船是清代潮汕通商船隻，因船頭塗朱紅得名。</p>
+      </div>
+    </div>
+  </div>
+  <div class="hall-nav" style="padding:0 24px;">
+    <a onclick="navigate('/hall/3')">← 上一廳</a>
+    <span class="counter">IV / VI</span>
+    <a onclick="navigate('/hall/5')">下一廳 →</a>
+  </div>
+  <footer class="footer">
+    <p class="footer-line1">給阿嬤的情書 · 電影記憶館 · 影迷致敬版</p>
+    <p class="footer-line2">致敬二〇二六《給阿嬤的情書》及聯合國教科文組織「僑批」檔案遺產</p>
+  </footer>
+</div>
+
+
+<!-- ===== Hall 5: 百人千言 ===== -->
+<!-- 标题/描述 + 三维筛选器 + 肖像卡片网格 -->
+<div id="page-hall-5" class="page">
+  <div class="wall-header">
+    <h2 class="wall-title">百人千言</h2>
+    <p class="wall-subtitle">一八八〇 ── 一九四五 · 一百封僑批</p>
+    <p class="wall-desc">他們離鄉那一日，沒人知道是不是最後一面。</p>
+    <p class="wall-desc">有人寫了五十年，有人只寫了一封。</p>
+    <p class="wall-desc">這裡是一百個虛構的人。他們的字，也是虛構的。但他們的影子，在這片海上散了太久了。</p>
+    <p class="wall-disclaimer">本展廳 100 人物 / 信件 / 肖像均為 AI 文學虛構創作，與真實歷史人物無關。</p>
+  </div>
+  <div class="filters" id="filters-container"><!-- JS动态渲染筛选按钮 --></div>
+  <div class="portrait-grid" id="portrait-grid"><!-- JS动态渲染肖像卡片 --></div>
+  <div class="hall-nav" style="max-width:1200px; margin:0 auto; padding:0 24px;">
+    <a onclick="navigate('/hall/4')">← 上一廳</a>
+    <span class="counter">V / VI</span>
+    <a onclick="navigate('/hall/6')">下一廳 →</a>
+  </div>
+  <footer class="footer">
+    <p class="footer-line1">給阿嬤的情書 · 電影記憶館 · 影迷致敬版</p>
+    <p class="footer-line2">致敬二〇二六《給阿嬤的情書》及聯合國教科文組織「僑批」檔案遺產</p>
+  </footer>
+</div>
+
+
+<!-- ===== Hall 6: 銀信局 ===== -->
+<!-- 左侧表单 + 右侧实时预览（桌面端双栏，移动端单栏） -->
+<div id="page-hall-6" class="page">
+  <div class="hall6-header">
+    <p class="hall6-sub">VI · 銀信局</p>
+    <h2 class="hall6-title">銀信局</h2>
+    <p class="hall6-desc">紙短情長，代書人鋪展一張紅框信紙，候您落筆。</p>
+  </div>
+
+  <div class="hall6-split">
+    <!-- 左侧：写信表单 -->
+    <div class="letter-form">
+      <!-- 寄信人 -->
+      <div class="form-group">
+        <label class="form-label">寄信人</label>
+        <div class="form-row">
+          <select class="form-select" id="sender-role">
+            <option>選擇身份</option><option>阿嬤</option><option>阿公</option><option selected>孫</option><option>兒</option><option>女</option><option>父</option><option>母</option><option>夫</option><option>妻</option><option>戀人</option><option>友</option>
+          </select>
+          <input class="form-input" placeholder="姓名" id="sender-name">
+        </div>
+      </div>
+      <!-- 收信人 -->
+      <div class="form-group">
+        <label class="form-label">收信人</label>
+        <div class="form-row">
+          <select class="form-select" id="receiver-role">
+            <option>選擇身份</option><option selected>阿嬤</option><option>阿公</option><option>孫</option><option>兒</option><option>女</option><option>父</option><option>母</option><option>夫</option><option>妻</option><option>戀人</option><option>友</option>
+          </select>
+          <input class="form-input" placeholder="姓名" id="receiver-name">
+        </div>
+      </div>
+      <!-- 心意类别 -->
+      <div class="form-group">
+        <label class="form-label">心意類別<span class="form-hint">（至多選五句，已選 <span id="mood-count">0</span>/5）</span></label>
+        <div class="toggle-group" id="mood-toggles"></div>
+      </div>
+      <!-- 随信附上 -->
+      <div class="form-group">
+        <label class="form-label">隨信附上</label>
+        <div class="toggle-group toggle-group-sm" id="attach-toggles"></div>
+        <input class="form-input" placeholder="其他物品（選填）" id="attach-custom" style="margin-top:12px; width:100%;">
+      </div>
+      <!-- 日期 -->
+      <div class="form-group">
+        <label class="form-label">日期</label>
+        <div class="form-row form-row-3col">
+          <input class="form-input" id="date-year" placeholder="二〇二六年">
+          <input class="form-input" id="date-month" placeholder="六月">
+          <input class="form-input" id="date-day" placeholder="十日">
+        </div>
+      </div>
+      <!-- 配图 -->
+      <div class="form-group">
+        <label class="form-label">配圖</label>
+        <div class="illust-grid" id="illust-grid"></div>
+      </div>
+      <!-- 移动端预览按钮（桌面端隐藏） -->
+      <button class="preview-btn-mobile" onclick="scrollToPreview()">預覽信紙 ↓</button>
+    </div>
+
+    <!-- 右侧：实时预览面板 -->
+    <div class="preview-panel" id="live-preview">
+      <!-- 默认提示语（未填写时） -->
+      <div id="preview-default">
+        <div class="preview-prompt">
+          <p>請先填寫寄信人與收信人姓名，代書先生方可落筆。</p>
+        </div>
+      </div>
+      <!-- 信纸预览区 -->
+      <div class="letter-preview-box" id="letter-preview-section" style="display:none;">
+        <h3 class="letter-preview-title">信紙預覽</h3>
+        <div id="letter-live-content"></div>
+      </div>
+      <!-- 信封预览区 -->
+      <div class="envelope-preview-box" id="envelope-preview-section" style="display:none;">
+        <h3 class="envelope-preview-title">信封預覽</h3>
+        <div id="envelope-live-content"></div>
+      </div>
+      <!-- 操作按钮 -->
+      <div class="form-actions">
+        <button class="btn-action btn-download-letter" id="btn-dl-letter" disabled onclick="alert('下載功能開發中')">下載信紙</button>
+        <button class="btn-action btn-download-envelope" id="btn-dl-envelope" disabled onclick="alert('下載功能開發中')">下載信封</button>
+        <button class="btn-action btn-share" onclick="alert('分享功能開發中')">分享</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="hall-nav" style="max-width:1200px; margin:0 auto; padding:0 24px;">
+    <a onclick="navigate('/hall/5')">← 上一廳</a>
+    <span class="counter">VI / VI</span>
+    <a class="disabled">下一廳 →</a>
+  </div>
+  <footer class="footer">
+    <p class="footer-line1">給阿嬤的情書 · 電影記憶館 · 影迷致敬版</p>
+    <p class="footer-line2">致敬二〇二六《給阿嬤的情書》及聯合國教科文組織「僑批」檔案遺產</p>
+  </footer>
+</div>
+
+
+<!-- ===== 我的收藏 ===== -->
+<!-- 展示已收藏的人物卡片，数据来自localStorage -->
+<div id="page-archive" class="page">
+  <div class="archive-page">
+    <h2 class="archive-title">我的收藏</h2>
+    <p class="archive-sub">你收藏的人，會在這裡等你回信</p>
+    <div id="favorites-container"><!-- JS动态渲染收藏卡片 --></div>
+  </div>
+  <footer class="footer">
+    <p class="footer-line1">給阿嬤的情書 · 電影記憶館 · 影迷致敬版</p>
+    <p class="footer-line2">致敬二〇二六《給阿嬤的情書》及聯合國教科文組織「僑批」檔案遺產</p>
+  </footer>
+</div>
+
+
+<!-- ===== 關於 ===== -->
+<div id="page-about" class="page">
+  <div class="about-page">
+    <div class="about-line"></div>
+    <p class="about-label">關於</p>
+    <div class="about-body">
+      <p>致敬 2026 電影《給阿嬤的情書》。</p>
+      <p>本站所有人物與信件均為 AI 文學虛構創作。</p>
+      <p>歷史背景參考 UNESCO 世界記憶名錄《僑批》。</p>
+      <p>一八八〇至一九四五，潮汕與閩南僑胞與南洋家鄉之間，</p>
+      <p>往來信件逾十七萬封。本作品願以一百個虛構的影子，</p>
+      <p>致敬其中每一封真實存在過的字。</p>
+    </div>
+  </div>
+  <footer class="footer">
+    <p class="footer-line1">給阿嬤的情書 · 電影記憶館 · 影迷致敬版</p>
+    <p class="footer-line2">致敬二〇二六《給阿嬤的情書》及聯合國教科文組織「僑批」檔案遺產</p>
+  </footer>
+</div>
+
+
+<!-- ===== 灯箱（展厅II信件大图预览）===== -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+  <button class="lightbox-prev" onclick="lightboxNav(-1)">&#8249;</button>
+  <img id="lightbox-img" src="" alt="">
+  <button class="lightbox-next" onclick="lightboxNav(1)">&#8250;</button>
+  <div class="lightbox-counter" id="lightbox-counter"></div>
+</div>
+
+
+<!-- ===== 人物详情弹窗（展厅V点击肖像）===== -->
+<!-- 双栏布局：左栏肖像卡片+收藏按钮，右栏竖排信件+翻页 -->
+<div class="person-modal" id="person-modal" onclick="if(event.target===this)closePersonModal()">
+  <div class="person-modal-content">
+    <button class="person-modal-close" onclick="closePersonModal()">&times;</button>
+    <div class="person-profile-panel"><!-- JS动态渲染 --></div>
+    <div class="person-letter-panel"><!-- JS动态渲染 --></div>
+  </div>
+</div>
+
+
+<!-- ===== 平面图弹窗 ===== -->
+<!-- SVG节点布局：中心序廳 + 6个展厅节点 + 关于节点 -->
+<!-- 节点标签只显示I-VI，不带"廳"前缀 -->
+<div class="floorplan-overlay" id="floorplan-overlay" onclick="if(event.target===this)closeFloorplan()">
+  <div class="floorplan-modal">
+    <button class="floorplan-close" onclick="closeFloorplan()">&times;</button>
+    <h3 class="floorplan-title">館內平面圖</h3>
+    <svg class="floorplan-svg" viewBox="0 0 600 440">
+      <!-- 连线：从中心序廳放射到各展厅 -->
+      <line x1="300" y1="200" x2="180" y2="120" stroke="rgba(120,80,40,0.2)" stroke-width="1"/>
+      <line x1="300" y1="200" x2="420" y2="120" stroke="rgba(120,80,40,0.2)" stroke-width="1"/>
+      <line x1="300" y1="200" x2="140" y2="240" stroke="rgba(120,80,40,0.2)" stroke-width="1"/>
+      <line x1="300" y1="200" x2="460" y2="240" stroke="rgba(120,80,40,0.2)" stroke-width="1"/>
+      <line x1="300" y1="200" x2="180" y2="360" stroke="rgba(120,80,40,0.2)" stroke-width="1"/>
+      <line x1="300" y1="200" x2="420" y2="360" stroke="rgba(120,80,40,0.2)" stroke-width="1"/>
+      <line x1="300" y1="200" x2="520" y2="80" stroke="rgba(120,80,40,0.2)" stroke-width="1"/>
+
+      <!-- 序廳（中心节点） -->
+      <g onclick="navigate('/');closeFloorplan();" style="cursor:pointer">
+        <circle class="node-circle" cx="300" cy="200" r="28" fill="#fdfaf3" stroke="rgba(120,80,40,0.15)" stroke-width="1.5"/>
+        <text x="300" y="205" text-anchor="middle" font-size="13" fill="#1a1410" font-family="Ma Shan Zheng,serif">序廳</text>
+      </g>
+
+      <!-- I — 阿嬤的銀信 -->
+      <g onclick="navigate('/hall/1');closeFloorplan();" style="cursor:pointer">
+        <circle class="node-circle" cx="180" cy="120" r="24" fill="#fdfaf3" stroke="rgba(120,80,40,0.15)" stroke-width="1.5"/>
+        <text x="180" y="124" text-anchor="middle" font-size="13" fill="#1a1410">I</text>
+        <text x="180" y="156" text-anchor="middle" font-size="11" fill="#8b7d6b">阿嬤的銀信</text>
+      </g>
+
+      <!-- II — 紙短情長 -->
+      <g onclick="navigate('/hall/2');closeFloorplan();" style="cursor:pointer">
+        <circle class="node-circle" cx="420" cy="120" r="24" fill="#fdfaf3" stroke="rgba(120,80,40,0.15)" stroke-width="1.5"/>
+        <text x="420" y="124" text-anchor="middle" font-size="13" fill="#1a1410">II</text>
+        <text x="420" y="156" text-anchor="middle" font-size="11" fill="#8b7d6b">紙短情長</text>
+      </g>
+
+      <!-- III — 代筆人 -->
+      <g onclick="navigate('/hall/3');closeFloorplan();" style="cursor:pointer">
+        <circle class="node-circle" cx="140" cy="240" r="24" fill="#fdfaf3" stroke="rgba(120,80,40,0.15)" stroke-width="1.5"/>
+        <text x="140" y="244" text-anchor="middle" font-size="13" fill="#1a1410">III</text>
+        <text x="140" y="276" text-anchor="middle" font-size="11" fill="#8b7d6b">代筆人</text>
+      </g>
+
+      <!-- IV — 過番 -->
+      <g onclick="navigate('/hall/4');closeFloorplan();" style="cursor:pointer">
+        <circle class="node-circle" cx="460" cy="240" r="24" fill="#fdfaf3" stroke="rgba(120,80,40,0.15)" stroke-width="1.5"/>
+        <text x="460" y="244" text-anchor="middle" font-size="13" fill="#1a1410">IV</text>
+        <text x="460" y="276" text-anchor="middle" font-size="11" fill="#8b7d6b">過番</text>
+      </g>
+
+      <!-- V — 百人千言 -->
+      <g onclick="navigate('/hall/5');closeFloorplan();" style="cursor:pointer">
+        <circle class="node-circle" cx="180" cy="360" r="24" fill="#fdfaf3" stroke="rgba(120,80,40,0.15)" stroke-width="1.5"/>
+        <text x="180" y="364" text-anchor="middle" font-size="13" fill="#1a1410">V</text>
+        <text x="180" y="396" text-anchor="middle" font-size="11" fill="#8b7d6b">百人千言</text>
+      </g>
+
+      <!-- VI — 銀信局 -->
+      <g onclick="navigate('/hall/6');closeFloorplan();" style="cursor:pointer">
+        <circle class="node-circle" cx="420" cy="360" r="24" fill="#fdfaf3" stroke="rgba(120,80,40,0.15)" stroke-width="1.5"/>
+        <text x="420" y="364" text-anchor="middle" font-size="13" fill="#1a1410">VI</text>
+        <text x="420" y="396" text-anchor="middle" font-size="11" fill="#8b7d6b">銀信局</text>
+      </g>
+
+      <!-- 關於（红色节点） -->
+      <g onclick="navigate('/about');closeFloorplan();" style="cursor:pointer">
+        <circle cx="520" cy="80" r="28" fill="#b34a3a" stroke="none"/>
+        <text x="520" y="85" text-anchor="middle" font-size="13" fill="#fff">關於</text>
+      </g>
+    </svg>
+  </div>
+</div>
+
+
+
+<!-- 主交互脚本 -->
+<script src="js/app.js"></script>
+</body>
+</html>
