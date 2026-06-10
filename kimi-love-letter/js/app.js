@@ -622,8 +622,49 @@ function renderFavorites() {
  * 右侧为实时预览区（信纸+信封），随输入动态更新。
  */
 
-/** 心意选项列表 */
-var moods = ['平安', '思念', '抱歉', '等待', '道別'];
+/** 心意选项 — 每个标签对应6条具体语句 */
+var moods = [
+  { name: '平安', sentences: [
+    '兒/孫在外，諸事順遂，伏惟釋念。',
+    '此地天時和暖，飲食有節，身體安泰。',
+    '月入足數，家中所寄之資已收，母庸掛慮。',
+    '同行者皆好，鄉鄰互照，母須擔憂。',
+    '番邦雖遠，神明庇佑，平安二字便是富貴。',
+    '近日工事順遂，得長官嘉許，足堪自慰。'
+  ]},
+  { name: '思念', sentences: [
+    '每念故鄉雨絲，便覺南洋日暖反成寒。',
+    '阿嬤所烹之粿，夢中嘗之，醒來惟枕巾沁水。',
+    '凡見白髮婦人，皆似阿嬤倚門之影。',
+    '月夜獨坐，舉首見星，知此星亦照故鄉。',
+    '鄉音久未入耳，每逢同鄉，便如見親人。',
+    '夜深燈下，常憶幼時竈前烤芋之香。'
+  ]},
+  { name: '抱歉', sentences: [
+    '此番遠行，未及拜別，跪請恕罪。',
+    '久未付筆，非吾忘也，實乃工事繁忙，心緒難寧。',
+    '上回所寄之數較往減少，皆因此地時局所累，望勿責怪。',
+    '不能侍奉於膝下，是兒此生之憾。',
+    '諾以歲末歸家，今恐難踐，懇求寬諒。',
+    '未能護持，致使家中諸事勞煩，伏乞海涵。'
+  ]},
+  { name: '等待', sentences: [
+    '歸期未定，唯望明年春暖，或可束裝。',
+    '待此地工事告一段落，必先回家小住。',
+    '屈指算來，離家已三載又七月，歸心日切。',
+    '若秋風起時仍未得歸，當再寄銀信報安。',
+    '唯願多保重，待我歸日，再共飲一杯熱茶。',
+    '行李雖已束起三回，奈何船期屢改，望寬心等候。'
+  ]},
+  { name: '道別', sentences: [
+    '此去南洋，山高水長，惟願此後家書不斷。',
+    '男兒志在四方，請勿以遠別為憂。',
+    '紅頭船將啟，書此一紙以代握別。',
+    '來日若不能歸，望以此信代見面之顏。',
+    '願以萬里之外，常承庇蔭。',
+    '就此擱筆，珍重再珍重。'
+  ]}
+];
 
 /** 附件选项列表 */
 var attachments = ['二百元', '自行車', '咸豬肉', '木棉花', '青橄欖', '油柑', '獅頭鵝'];
@@ -640,8 +681,11 @@ var illusts = [
   { src: 'exhibits/illust-yingge.png',       name: '英歌' }
 ];
 
-/** 已选择的心意集合（最多5项） */
-var selectedMoods = {};
+/** 当前选中的句子（跨分类汇总） */
+var selectedSentences = [];
+
+/** 当前展开的心意标签索引 */
+var activeMoodIndex = 0;
 
 /** 已选择的附件集合 */
 var selectedAttachments = {};
@@ -650,35 +694,86 @@ var selectedAttachments = {};
 var selectedIllust = illusts[0]; // 默认选中第一张「红头船」
 
 /**
- * 渲染切换按钮组（心意/附件）
- * @param {string} containerId - 容器DOM ID
- * @param {string[]} items - 选项列表
- * @param {Object} selectedSet - 选中状态集合
+ * 渲染心意类别标签和句子列表
+ * 点击标签展开对应句子，句子支持复选（最多5项）
  */
-function renderToggleGroup(containerId, items, selectedSet) {
-  var container = document.getElementById(containerId);
-  items.forEach(function(item) {
+function renderMoodSection() {
+  var tabsContainer = document.getElementById('mood-tabs');
+  var sentencesContainer = document.getElementById('mood-sentences');
+
+  // 渲染标签按钮
+  moods.forEach(function(mood, i) {
     var btn = document.createElement('button');
-    btn.className = 'toggle-btn';
-    btn.textContent = item;
+    btn.className = 'mood-tab' + (i === activeMoodIndex ? ' active' : '');
+    btn.innerHTML = '<span class="mood-tab-check"></span>' + mood.name;
     btn.addEventListener('click', function() {
-      if (selectedSet[item]) {
-        delete selectedSet[item];
-        btn.classList.remove('active');
+      activeMoodIndex = i;
+      document.querySelectorAll('.mood-tab').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      renderSentences();
+    });
+    tabsContainer.appendChild(btn);
+  });
+
+  // 初始渲染句子
+  renderSentences();
+}
+
+/**
+ * 渲染当前标签的句子列表
+ */
+function renderSentences() {
+  var sentencesContainer = document.getElementById('mood-sentences');
+  sentencesContainer.innerHTML = '';
+  var currentMood = moods[activeMoodIndex];
+
+  currentMood.sentences.forEach(function(text) {
+    var isSelected = selectedSentences.indexOf(text) !== -1;
+    var div = document.createElement('div');
+    div.className = 'mood-sentence' + (isSelected ? ' selected' : '');
+    div.innerHTML =
+      '<span class="sentence-checkbox"></span>' +
+      '<span class="sentence-text">' + text + '</span>';
+    div.addEventListener('click', function() {
+      if (isSelected) {
+        // 取消选中
+        selectedSentences = selectedSentences.filter(function(s) { return s !== text; });
+        div.classList.remove('selected');
       } else {
-        // 心意最多选5项
-        if (containerId === 'mood-toggles' && Object.keys(selectedSet).length >= 5) return;
-        selectedSet[item] = true;
-        btn.classList.add('active');
+        // 最多选5项
+        if (selectedSentences.length >= 5) return;
+        selectedSentences.push(text);
+        div.classList.add('selected');
       }
-      // 更新心意计数显示
-      if (containerId === 'mood-toggles') {
-        var countEl = document.getElementById('mood-count');
-        if (countEl) countEl.textContent = Object.keys(selectedSet).length;
-      }
+      // 更新计数和复选框图标
+      updateMoodCount();
+      updateTabChecks();
       updateLivePreview();
     });
-    container.appendChild(btn);
+    sentencesContainer.appendChild(div);
+  });
+}
+
+/**
+ * 更新心意已选计数显示
+ */
+function updateMoodCount() {
+  var countEl = document.getElementById('mood-count');
+  if (countEl) countEl.textContent = selectedSentences.length;
+}
+
+/**
+ * 更新所有标签的复选框勾选状态（选中过该标签下的句子则打勾）
+ */
+function updateTabChecks() {
+  var tabBtns = document.querySelectorAll('.mood-tab');
+  moods.forEach(function(mood, i) {
+    var hasSelected = mood.sentences.some(function(s) { return selectedSentences.indexOf(s) !== -1; });
+    if (hasSelected) {
+      tabBtns[i].classList.add('active');
+    } else {
+      tabBtns[i].classList.remove('active');
+    }
   });
 }
 
@@ -703,7 +798,7 @@ function renderIllustGrid() {
 }
 
 // 初始化表单组件
-renderToggleGroup('mood-toggles', moods, selectedMoods);
+renderMoodSection();
 renderToggleGroup('attach-toggles', attachments, selectedAttachments);
 renderIllustGrid();
 
@@ -782,7 +877,6 @@ function updateLivePreview() {
   if (btnEnvelope) btnEnvelope.disabled = false;
 
   // 收集表单数据
-  var moodList = Object.keys(selectedMoods);
   var attachList = Object.keys(selectedAttachments);
   var sName = senderName || '○○';
   var rName = receiverName || '○○';
@@ -796,28 +890,37 @@ function updateLivePreview() {
 
   // ===== 信纸预览（横排，红色边框，手写体） =====
   var greeting = (rRole ? rRole + ' ' : '') + rName + ' 大人，展信安康。';
-  var bodyText = '久違尊顏，不勝思念。';
-  if (moodList.length > 0) {
-    bodyText += '遊子在外，一切' + moodList.join('、') + '，請勿掛念。';
+
+  // 使用选中的句子作为正文
+  var bodyHTML = '';
+  if (selectedSentences.length > 0) {
+    bodyHTML = selectedSentences.map(function(s) {
+      return '<span class="letter-body">' + s + '</span>';
+    }).join('');
+  } else {
+    bodyHTML = '<span class="letter-body">久違尊顏，不勝思念。</span>';
   }
+
   var attachText = '';
   if (attachList.length > 0 || customAttach) {
     var allAttach = attachList.slice();
     if (customAttach) allAttach.push(customAttach);
-    attachText = '今隨信附上 ' + allAttach.join('、') + '，聊表孝心。';
+    attachText = '<span class="letter-body">今隨信附上 ' + allAttach.join('、') + '，聊表孝心。</span>';
   }
+
   var signText = (sRole ? sRole + ' ' : '') + sName + ' 叩上';
 
-  var illustImg = selectedIllust ? '<img class="letter-paper-illust" src="' + selectedIllust.src + '" alt="' + selectedIllust.name + '">' : '';
+  // 配图水印（灰度半透明，贴在信纸底部）
+  var illustWatermark = selectedIllust ? '<img class="letter-paper-illust" src="' + selectedIllust.src + '" alt="' + selectedIllust.name + '">' : '';
 
   var letterHTML =
     '<div class="letter-paper">' +
-      illustImg +
+      illustWatermark +
       '<div class="letter-paper-inner">' +
         '<div class="letter-text">' +
           '<span class="letter-greeting">' + greeting + '</span>' +
-          '<span class="letter-body">' + bodyText + '</span>' +
-          (attachText ? '<span class="letter-body">' + attachText + '</span>' : '') +
+          bodyHTML +
+          (attachText ? attachText : '') +
           '<span class="letter-sign">' + signText + '</span>' +
           (dateStr ? '<span class="letter-date">' + dateStr + '</span>' : '') +
         '</div>' +

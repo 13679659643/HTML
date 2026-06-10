@@ -806,6 +806,102 @@ a { text-decoration: none; color: inherit; }
 /* 附件按钮略小字号 */
 .toggle-group-sm .toggle-btn { padding: 6px 14px; font-size: 13px; }
 
+/* ----- 心意类别标签页（原站交互样式） ----- */
+.mood-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.mood-tab {
+  padding: 8px 18px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-mute);
+  font-family: inherit;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mood-tab.active {
+  background: rgba(179, 74, 58, 0.06);
+  color: var(--color-vermilion);
+  border-color: var(--color-vermilion);
+}
+.mood-tab:hover { border-color: var(--color-vermilion); }
+/* 复选框图标（选中时显示√） */
+.mood-tab-check {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+  position: relative;
+}
+.mood-tab.active .mood-tab-check::after {
+  content: '\2713';
+  position: absolute;
+  top: -2px;
+  left: 1px;
+  font-size: 11px;
+  line-height: 1;
+}
+
+/* 心意句子列表 — 点击标签后展开的复选框列表 */
+.mood-sentences {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mood-sentence {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-paper);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.mood-sentence:hover { border-color: var(--color-vermilion); }
+.mood-sentence.selected {
+  border-color: var(--color-vermilion);
+  background: rgba(179, 74, 58, 0.03);
+}
+/* 句子复选框 */
+.sentence-checkbox {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 2px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.mood-sentence.selected .sentence-checkbox {
+  border-color: var(--color-vermilion);
+  background: var(--color-vermilion);
+}
+.mood-sentence.selected .sentence-checkbox::after {
+  content: '\2713';
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+}
+/* 句子文字 */
+.sentence-text {
+  font-size: 14px;
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
 /* 配图选择网格 — 4列网格，每项含缩略图和标签 */
 .illust-grid {
   display: grid;
