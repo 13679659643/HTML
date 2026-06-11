@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * 給阿嬤的情書 · 電影記憶館 — 应用交互逻辑
+ * 紙短情長 · 兩個人的博物館 — 应用交互逻辑
  * ============================================================
  * 
  * 【功能总结】
@@ -9,8 +9,8 @@
  * 1. SPA路由系统 — 基于hash的页面切换，支持前进/后退
  * 2. 滚动进度条 — 实时跟踪页面滚动百分比
  * 3. 展厅II 灯箱 — 8封信件图片的全屏预览，支持键盘导航
- * 4. 展厅V 百人千言 — 100人数据生成、三维筛选、详情弹窗（竖排信件+收藏）
- * 5. 展厅VI 银信局 — 表单交互、实时信纸/信封预览
+ * 4. 展厅V 时光相册 — 100张照片数据生成、三维筛选、详情弹窗（竖排信件+收藏）
+ * 5. 展厅VI 情书局 — 表单交互、实时信纸/信封预览
  * 6. 我的收藏 — localStorage持久化，收藏/取消收藏
  * 7. 平面图弹窗 — SVG节点点击导航
  * 8. 全局键盘事件 — Escape关闭所有弹窗
@@ -19,9 +19,9 @@
  * - 纯原生JavaScript，无框架依赖
  * - localStorage用于收藏数据持久化
  * - 竖排信件内容使用writing-mode: vertical-rl实现
- * - 人物数据为程序生成的虚构数据（100人）
+ * - 照片数据为程序生成的虚构数据（100张）
  * 
- * @version 2.0
+ * @version 3.0
  * @author 辜涛
  */
 
@@ -122,22 +122,22 @@ window.addEventListener('scroll', updateProgress);
 
 
 /* ============================================================
-   3. 展厅II 紙短情長 — 图片画廊 + 灯箱
+   3. 展厅II 纸短情长 — 图片画廊 + 灯箱
    ============================================================ */
 
 /**
- * 8封信件数据：包含图片路径和描述
+ * 8封情书数据：包含图片路径和描述
  * 用于渲染画廊缩略图和灯箱大图
  */
 var letterData = [
-  { src: 'exhibits/letters/letter-1.jpg', alt: '影片起始所念信件' },
-  { src: 'exhibits/letters/letter-2.jpg', alt: '木生開始跑船' },
-  { src: 'exhibits/letters/letter-3.jpg', alt: '謝南枝代寫' },
-  { src: 'exhibits/letters/letter-4.jpg', alt: '木生入獄時' },
-  { src: 'exhibits/letters/letter-5.jpg', alt: '木生托狄功所寫' },
-  { src: 'exhibits/letters/letter-6.jpg', alt: '狄功課上講解「相思」所拆信件' },
-  { src: 'exhibits/letters/letter-7.jpg', alt: '木生去世·謝南枝海邊所燒' },
-  { src: 'exhibits/letters/letter-8.jpg', alt: '走馬燈回憶' }
+  { src: 'exhibits/letters/letter-1.jpg', alt: '第一封：相识那天' },
+  { src: 'exhibits/letters/letter-2.jpg', alt: '第二封：心动瞬间' },
+  { src: 'exhibits/letters/letter-3.jpg', alt: '第三封：思念成疾' },
+  { src: 'exhibits/letters/letter-4.jpg', alt: '第四封：分别不舍' },
+  { src: 'exhibits/letters/letter-5.jpg', alt: '第五封：重逢欢喜' },
+  { src: 'exhibits/letters/letter-6.jpg', alt: '第六封：日常温柔' },
+  { src: 'exhibits/letters/letter-7.jpg', alt: '第七封：未来期许' },
+  { src: 'exhibits/letters/letter-8.jpg', alt: '第八封：三周年寄语' }
 ];
 
 /** 渲染画廊网格 — 8张可点击的信件缩略图 */
@@ -186,102 +186,109 @@ function lightboxNav(dir) {
 
 
 /* ============================================================
-   4. 展厅V 百人千言 — 数据生成、筛选、详情弹窗、收藏
+   4. 展厅V 时光相册 — 数据生成、筛选、详情弹窗、收藏
    ============================================================ */
 
 /**
  * 【数据生成模块】
- * 程序化生成100个虚构的过番人物数据。
- * 每个人物包含：姓名、年代、类型、目的地、信件内容等。
- * 所有数据均为AI文学虚构创作，与真实历史人物无关。
+ * 程序化生成100张照片数据。
+ * 每张照片包含：标题、年份、类型、地点、心情等。
  */
 
-/** 年代列表 — 用于筛选器 */
-var eras = ['晚清', '清末', '民國初', '民國中', '民國後'];
+/** 年份列表 — 用于筛选器 */
+var eras = ['2023年', '2024年', '2025年', '2026年'];
 
-/** 信件类型 — 用于筛选器和人物卡片 */
-var types = ['報平安', '思念', '匯款', '告別', '喜訊', '憂訊', '囑託', '求助'];
+/** 照片类型 — 用于筛选器和卡片 */
+var types = ['纪念日', '生日', '旅游', '逛街', '日常', '节日', '惊喜', '美食'];
 
-/** 目的地列表 — 南洋各城市 */
-var destinations = ['檳城', '曼谷', '新加坡', '西貢', '馬尼拉', '吉隆坡', '仰光', '雅加達', '泗水', '巴達維亞'];
+/** 地点列表 */
+var destinations = ['成都', '都江堰', '青城山', '川西竹海', '西岭雪山', '洛带', '峨眉山', '眉山', '黄龙溪', '三圣乡'];
 
-/** 姓氏库 — 潮汕/闽南常见姓氏 */
-var surnames = ['陳', '林', '黃', '張', '李', '王', '吳', '劉', '蔡', '楊',
-  '許', '鄭', '謝', '郭', '洪', '邱', '曾', '廖', '賴', '周',
-  '蘇', '莊', '呂', '江', '何', '蕭', '羅', '潘', '簡', '朱'];
+/** 照片标题 */
+var photoTitles = [
+  '初遇那天', '第一次约会', '第一次旅行', '生日惊喜', '跨年夜',
+  '情人节', '周年纪念', '春日出游', '夏夜散步', '秋日暖阳',
+  '冬天第一杯奶茶', '一起看日落', '雨中漫步', '深夜长谈', '第一次做饭',
+  '一起看电影', '周末懒觉', '你的笑容', '拥抱的温度', '手牵手逛街',
+  '为你选的礼物', '烛光晚餐', '星空下', '海边散步', '山间小路',
+  '第一次见家长', '你的生日', '我的生日', '十二月的初雪', '新年钟声',
+  '樱花树下', '银杏叶落', '一起健身', '为你煮粥', '深夜电话',
+  '你说想我', '我说爱你', '一起看剧', '逛超市', '试衣服',
+  '冰淇淋', '火锅之夜', '烧烤摊', '路边小吃', '下午茶',
+  '玫瑰花', '惊喜礼物', '纪念日蛋糕', '你的照片', '我的照片',
+  '自驾游', '飞机上', '高铁站', '地铁里', '公交上',
+  '我的女孩', '你的男孩', '最好的我们', '一起变好', '未来可期',
+  '三周年', '每一天', '日日夜夜', '朝朝暮暮', '岁岁年年',
+  '有你真好', '幸好有你', '永远一起', '不分离', '我爱你',
+  '谢谢你', '对不起', '没关系', '我在呢', '别怕',
+  '抱着你', '亲亲你', '哄你睡', '叫醒你', '等你',
+  '照片76', '照片77', '照片78', '照片79', '照片80',
+  '照片81', '照片82', '照片83', '照片84', '照片85',
+  '照片86', '照片87', '照片88', '照片89', '照片90',
+  '照片91', '照片92', '照片93', '照片94', '照片95',
+  '照片96', '照片97', '照片98', '照片99', '照片100'
+];
 
-/** 名字库 — 带有时代感的名字 */
-var givenNames = ['木生', '阿水', '阿火', '阿土', '阿金', '阿福', '阿貴', '阿財',
-  '阿壽', '阿康', '阿寧', '阿安', '阿泰', '阿平', '阿和', '阿順',
-  '阿旺', '阿昌', '阿盛', '阿興', '南枝', '秀英', '玉蘭', '阿蓮',
-  '美珠', '淑芬', '秋霞', '春花', '冬梅', '夏荷'];
+/** 心情列表 */
+var moods = ['开心', '感动', '想念', '幸福', '惊喜', '温馨', '浪漫', '甜蜜'];
 
-/** 身份/角色列表 — 对应不同类型的信件 */
-var roles = ['學徒', '船員', '商人', '礦工', '教師', '醫生', '農夫', '漁夫'];
-
-/** 收信关系 — 对应信件类型 */
-var relations = ['寄予父親', '寄予母親', '寄予妻子', '寄予兒子', '寄予女兒', '寄予兄弟', '寄予友人', '寄予戀人'];
+/** 关联描述 */
+var relations = ['和欢欢一起', '想对欢欢说', '给欢欢看', '陪欢欢', '为欢欢', '等欢欢', '找欢欢', '抱欢欢'];
 
 /**
- * 竖排信件模板 — 传统僑批格式
- * 每封信包含称谓、正文、落款，使用繁体中文
+ * 竖排情书模板
+ * 每封信包含问候、正文、落款
  * 实际展示时使用writing-mode: vertical-rl实现竖排效果
  */
 var letterTemplates = [
-  '父親大人膝下：\n\n兒在南洋一切安好，請勿掛念。\n工作雖然辛苦，但收入尚可。\n今隨信附上銀錢若干，\n望收妥。\n\n天氣漸涼，伏惟珍重。\n\n兒 {name} 叩上\n\n{name_era}年{month}月',
-  '母親大人膝下：\n\n不孝兒遠渡重洋，\n心中萬分思念。\n近日身體尚好，\n工作也漸穩定。\n\n隨信附上布匹一件，\n望母親裁衣保暖。\n\n兒 {name} 敬稟\n\n{name_era}年{month}月',
-  '吾妻如晤：\n\n一別數月，甚是想念。\n此處生活雖苦，\n然為了家計，不得不然。\n\n今寄回銀信一封，\n望妻善自保重。\n待來日歸家，再敘天倫。\n\n夫 {name} 手書\n\n{name_era}年{month}月',
-  '父親大人安：\n\n兒在此處學藝，\n日漸精進。\n東家待人寬厚，\n同事亦多和睦。\n\n雖离家萬里，\n然心中無時不念家人。\n望父親保重身體。\n\n兒 {name} 叩\n\n{name_era}年{month}月'
+  '欢欢：\n\n今天又想你了。\n每一天都像是在倒计时，\n数着下次见面的日子。\n你笑起来的样子，\n我永远都看不够。\n\n爱你的人\n{dateStr}',
+  '亲爱的欢欢：\n\n你知道吗，\n和你在一起的每一天，\n都值得被记住。\n那些平凡的日常，\n因为有你而闪闪发光。\n\n永远爱你\n{dateStr}',
+  '欢欢宝贝：\n\n三周年快乐！\n感谢你出现在我的生命里，\n让每一天都有了意义。\n未来的路，\n我想和你一起走。\n\n你的{sender}\n{dateStr}',
+  '欢欢：\n\n又是想你的夜晚。\n翻看我们的照片，\n每一张都是幸福的证据。\n希望以后的每一个三年，\n都有你在身边。\n\n爱你\n{dateStr}'
 ];
 
 /**
- * 生成单个人物数据
- * @param {number} i - 人物序号（0-99）
- * @returns {Object} 人物数据对象
+ * 生成单张照片数据
+ * @param {number} i - 照片序号（0-99）
+ * @returns {Object} 照片数据对象
  */
 function generatePerson(i) {
-  var surname = surnames[i % surnames.length];
-  var given = givenNames[i % givenNames.length];
+  var title = photoTitles[i % photoTitles.length];
   var era = eras[i % eras.length];
   var type = types[i % types.length];
   var dest = destinations[i % destinations.length];
-  var origins = ['汕頭', '潮州', '澄海', '饒平', '揭陽', '普寧', '惠來', '潮陽'];
+  var origins = ['成都', '家里', '学校', '公司', '车站', '机场', '酒店', '公园'];
   var origin = origins[i % origins.length];
-  var role = roles[i % roles.length];
+  var mood = moods[i % moods.length];
   var relation = relations[i % relations.length];
-  var age = 16 + (i % 45);
 
-  // 计算年号
-  var yearBase = 1880 + (i % 66);
-  var yearStr;
-  if (yearBase < 1909) {
-    yearStr = '光緒' + toChineseNum(yearBase - 1874) + '年';
-  } else if (yearBase < 1912) {
-    yearStr = '宣統' + toChineseNum(yearBase - 1908) + '年';
-  } else {
-    yearStr = '民國' + toChineseNum(yearBase - 1911) + '年';
-  }
+  // 日期：从2023年12月3日开始，每隔几天一张照片
+  var baseDate = new Date(2023, 11, 3);
+  var dayOffset = Math.floor(i * (1095 / 100));
+  var photoDate = new Date(baseDate.getTime() + dayOffset * 24 * 60 * 60 * 1000);
+  var yearStr = photoDate.getFullYear() + '年';
+  var monthStr = (photoDate.getMonth() + 1) + '月';
+  var dayStr = photoDate.getDate() + '日';
+  var dateStr = yearStr + monthStr + dayStr;
 
   // 生成信件内容
   var template = letterTemplates[i % letterTemplates.length];
   var letterContent = template
-    .replace(/{name}/g, surname + given)
-    .replace(/{name_era}/g, yearStr.replace('年', ''))
-    .replace(/{month}/g, toChineseNum((i % 12) + 1));
+    .replace(/{dateStr}/g, dateStr)
+    .replace(/{sender}/g, '我');
 
   return {
     id: i + 1,
     num: String(i + 1).padStart(3, '0'),
-    name: surname + given,
+    name: title,
     era: era,
     yearStr: yearStr,
     type: type,
     dest: dest,
     origin: origin,
-    role: role,
-    age: age,
+    mood: mood,
     relation: relation,
-    meta: yearStr + ' · ' + origin + '→' + dest,
+    meta: dateStr + ' · ' + origin + '→' + dest,
     letter: letterContent
   };
 }
@@ -351,9 +358,9 @@ function createFilterGroup(label, items, filterKey) {
 }
 
 // 初始化三组筛选器
-createFilterGroup('年代:', eras, 'era');
-createFilterGroup('類型:', types, 'type');
-createFilterGroup('目的地:', destinations, 'dest');
+createFilterGroup('年份:', eras, 'era');
+createFilterGroup('类型:', types, 'type');
+createFilterGroup('地点:', destinations, 'dest');
 
 /**
  * 设置筛选条件并刷新肖像网格
@@ -448,13 +455,13 @@ function openPersonModal(person) {
 function renderPersonModal(person) {
   var modal = document.getElementById('person-modal');
 
-  // 左栏：肖像与基本信息
+  // 左栏：照片与基本信息
   var profilePanel = modal.querySelector('.person-profile-panel');
   var isFav = isFavorite(person.id);
   profilePanel.innerHTML =
     '<img class="person-profile-img" src="portraits/' + person.num + '.jpg" alt="' + person.name + '">' +
     '<h3 class="person-profile-name">' + person.name + '</h3>' +
-    '<p class="person-profile-role">' + person.role + ' · ' + person.age + '歲</p>' +
+    '<p class="person-profile-role">' + person.mood + '</p>' +
     '<p class="person-profile-meta">' + person.meta + '</p>' +
     '<p class="person-profile-to">' + person.relation + '</p>' +
     '<button class="btn-favorite' + (isFav ? ' favorited' : '') + '" onclick="toggleFavorite(' + person.id + ')">' +
@@ -467,13 +474,13 @@ function renderPersonModal(person) {
     '<div class="letter-scroll">' +
       '<div class="letter-vertical">' + person.letter + '</div>' +
     '</div>' +
-    '<div class="letter-stamp">銀信</div>' +
+    '<div class="letter-stamp">情书</div>' +
     '<div class="letter-nav">' +
-      '<button onclick="navPerson(-1)"' + (currentPersonIndex <= 0 ? ' disabled' : '') + '>← 上一封</button>' +
-      '<span class="letter-nav-counter">第 ' + person.num + ' 封 · 共 ' + currentFilteredPeople.length + ' 封</span>' +
-      '<button onclick="navPerson(1)"' + (currentPersonIndex >= currentFilteredPeople.length - 1 ? ' disabled' : '') + '>下一封 →</button>' +
+      '<button onclick="navPerson(-1)"' + (currentPersonIndex <= 0 ? ' disabled' : '') + '>← 上一张</button>' +
+      '<span class="letter-nav-counter">第 ' + person.num + ' 张 · 共 ' + currentFilteredPeople.length + ' 张</span>' +
+      '<button onclick="navPerson(1)"' + (currentPersonIndex >= currentFilteredPeople.length - 1 ? ' disabled' : '') + '>下一张 →</button>' +
     '</div>' +
-    '<span class="letter-nav-back" onclick="closePersonModal()">↺ 返回百人牆</span>';
+    '<span class="letter-nav-back" onclick="closePersonModal()">↺ 返回时光相册</span>';
 }
 
 /**
@@ -506,7 +513,7 @@ function closePersonModal() {
  */
 
 /** localStorage键名 */
-var FAVORITES_KEY = 'kimi-love-letter-favorites';
+var FAVORITES_KEY = 'zhuhuan-love-letter-520';
 
 /**
  * 获取所有收藏的人物ID
@@ -581,8 +588,8 @@ function renderFavorites() {
     // 空状态
     container.innerHTML =
       '<div class="archive-empty">' +
-        '<p class="archive-empty-msg">還沒有人住進你的檔案。</p>' +
-        '<button class="btn-back" onclick="navigate(\'/hall/5\')">↩ 回到百人牆</button>' +
+        '<p class="archive-empty-msg">还没有收藏任何照片。</p>' +
+        '<button class="btn-back" onclick="navigate(\'/hall/5\')">↩ 回到时光相册</button>' +
       '</div>';
     return;
   }
@@ -613,72 +620,72 @@ function renderFavorites() {
 
 
 /* ============================================================
-   6. 展厅VI 銀信局 — 表单交互 + 实时预览
+   6. 展厅VI 情书局 — 表单交互 + 实时预览
    ============================================================ */
 
 /**
- * 【银信局表单模块】
+ * 【情书局表单模块】
  * 左侧为表单（寄信人/收信人/心意/附件/日期/配图），
  * 右侧为实时预览区（信纸+信封），随输入动态更新。
  */
 
 /** 心意选项 — 每个标签对应6条具体语句 */
 var moods = [
-  { name: '平安', sentences: [
-    '兒/孫在外，諸事順遂，伏惟釋念。',
-    '此地天時和暖，飲食有節，身體安泰。',
-    '月入足數，家中所寄之資已收，母庸掛慮。',
-    '同行者皆好，鄉鄰互照，母須擔憂。',
-    '番邦雖遠，神明庇佑，平安二字便是富貴。',
-    '近日工事順遂，得長官嘉許，足堪自慰。'
-  ]},
   { name: '思念', sentences: [
-    '每念故鄉雨絲，便覺南洋日暖反成寒。',
-    '阿嬤所烹之粿，夢中嘗之，醒來惟枕巾沁水。',
-    '凡見白髮婦人，皆似阿嬤倚門之影。',
-    '月夜獨坐，舉首見星，知此星亦照故鄉。',
-    '鄉音久未入耳，每逢同鄉，便如見親人。',
-    '夜深燈下，常憶幼時竈前烤芋之香。'
+    '每一天都在想你，从早安到晚安。',
+    '你不在身边的日子，连空气都觉得寂寞。',
+    '想你的笑容，想你的声音，想你的一切。',
+    '手机里全是你的照片，翻来覆去看不够。',
+    '距离再远，也远不过我对你的思念。',
+    '想你的时候，就看看天空，知道你也在同一片天下。'
   ]},
-  { name: '抱歉', sentences: [
-    '此番遠行，未及拜別，跪請恕罪。',
-    '久未付筆，非吾忘也，實乃工事繁忙，心緒難寧。',
-    '上回所寄之數較往減少，皆因此地時局所累，望勿責怪。',
-    '不能侍奉於膝下，是兒此生之憾。',
-    '諾以歲末歸家，今恐難踐，懇求寬諒。',
-    '未能護持，致使家中諸事勞煩，伏乞海涵。'
+  { name: '甜蜜', sentences: [
+    '和你在一起的每一天，都是最好的日子。',
+    '你的笑是我见过最美的风景。',
+    '牵着你的手，走到哪里都是家。',
+    '有你在的日子，连阳光都格外温柔。',
+    '你是我这辈子最甜的意外。',
+    '每天醒来最幸福的事，就是身边有你。'
   ]},
-  { name: '等待', sentences: [
-    '歸期未定，唯望明年春暖，或可束裝。',
-    '待此地工事告一段落，必先回家小住。',
-    '屈指算來，離家已三載又七月，歸心日切。',
-    '若秋風起時仍未得歸，當再寄銀信報安。',
-    '唯願多保重，待我歸日，再共飲一杯熱茶。',
-    '行李雖已束起三回，奈何船期屢改，望寬心等候。'
+  { name: '感恩', sentences: [
+    '谢谢你出现在我的生命里。',
+    '感谢你一直陪在我身边，不离不弃。',
+    '有你的包容和理解，我才是更好的自己。',
+    '谢谢你让我知道，被爱是什么感觉。',
+    '三年了，感谢你选择和我一起走过。',
+    '遇见你，是我最大的幸运。'
   ]},
-  { name: '道別', sentences: [
-    '此去南洋，山高水長，惟願此後家書不斷。',
-    '男兒志在四方，請勿以遠別為憂。',
-    '紅頭船將啟，書此一紙以代握別。',
-    '來日若不能歸，望以此信代見面之顏。',
-    '願以萬里之外，常承庇蔭。',
-    '就此擱筆，珍重再珍重。'
+  { name: '期许', sentences: [
+    '未来的每一天，我都想和你一起。',
+    '下一个三年，下下个三年，都要和你在一起。',
+    '等我们老了，还要一起看日落。',
+    '以后的路很长，但只要你在，我什么都不怕。',
+    '我想和你，走遍这个世界每一个角落。',
+    '愿我们的故事，永远没有结局。'
+  ]},
+  { name: '告白', sentences: [
+    '我爱你，不是因为你是谁，而是因为和你在一起时我是谁。',
+    '你是我写过最美的情书，也是我余生最想守的人。',
+    '如果世界只剩十分钟，我想和你一起度过。',
+    '喜欢你，是我做过最对的事。',
+    '我想用一辈子，去证明我爱你。',
+    '你是我的今天，也是我所有的明天。'
   ]}
 ];
 
 /** 附件选项列表 */
-var attachments = ['二百元', '自行車', '咸豬肉', '木棉花', '青橄欖', '油柑', '獅頭鵝'];
+var attachments = ['玫瑰花', '巧克力', '手写信', '小蛋糕', '星星灯', '情侣手链', '惊喜礼物'];
 
 /** 配图选项列表 — 8张插画 */
 var illusts = [
-  { src: 'exhibits/illust-redhead-boat.png', name: '紅頭船' },
-  { src: 'exhibits/illust-kapok.png',        name: '木棉花' },
-  { src: 'exhibits/illust-olive.png',        name: '油柑' },
-  { src: 'exhibits/illust-goose.png',        name: '獅頭鵝' },
-  { src: 'exhibits/illust-bridge.png',       name: '石板橋' },
-  { src: 'exhibits/illust-tricycle.png',     name: '三輪車' },
-  { src: 'exhibits/illust-miguo.png',        name: '無米粿' },
-  { src: 'exhibits/illust-yingge.png',       name: '英歌' }
+  { src: 'exhibits/illust-redhead-boat.png', name: '爱心' },
+  { src: 'exhibits/illust-kapok.png',        name: '花朵' },
+  { src: 'exhibits/illust-olive.png',        name: '月亮' },
+  { src: 'exhibits/illust-goose.png',        name: '星星' },
+  { src: 'exhibits/illust-bridge.png',       name: '彩虹' },
+  { src: 'exhibits/illust-tricycle.png',     name: '气球' },
+  { src: 'exhibits/illust-miguo.png',        name: '蛋糕' },
+  { src: 'exhibits/illust-yingge.png',       name: '戒指' }
 ];
 
 /** 当前选中的句子（跨分类汇总） */
@@ -691,7 +698,7 @@ var activeMoodIndex = 0;
 var selectedAttachments = {};
 
 /** 当前选中的配图 */
-var selectedIllust = illusts[0]; // 默认选中第一张「红头船」
+var selectedIllust = illusts[0]; // 默认选中第一张配图「爱心」
 
 /**
  * 渲染心意类别标签和句子列表
@@ -774,6 +781,36 @@ function updateTabChecks() {
     } else {
       tabBtns[i].classList.remove('active');
     }
+  });
+}
+
+/**
+ * 渲染附件选择切换组
+ * 将附件列表渲染为可点击的切换按钮
+ * @param {string} containerId - 容器元素ID
+ * @param {string[]} items - 附件名称数组
+ * @param {Object} storage - 存储选中状态的对象（键为附件名，值为true表示选中）
+ */
+function renderToggleGroup(containerId, items, storage) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+
+  items.forEach(function(item) {
+    var btn = document.createElement('button');
+    btn.className = 'toggle-btn' + (storage[item] ? ' active' : '');
+    btn.textContent = item;
+    btn.addEventListener('click', function() {
+      if (storage[item]) {
+        delete storage[item];
+        btn.classList.remove('active');
+      } else {
+        storage[item] = item;
+        btn.classList.add('active');
+      }
+      updateLivePreview();
+    });
+    container.appendChild(btn);
   });
 }
 
@@ -889,7 +926,7 @@ function updateLivePreview() {
   var customAttach = document.getElementById('attach-custom') ? document.getElementById('attach-custom').value : '';
 
   // ===== 信纸预览（横排，红色边框，手写体） =====
-  var greeting = (rRole ? rRole + ' ' : '') + rName + ' 大人，展信安康。';
+  var greeting = (rRole ? rRole + ' ' : '') + rName + '，展信欢颜。';
 
   // 使用选中的句子作为正文
   var bodyHTML = '';
@@ -898,17 +935,17 @@ function updateLivePreview() {
       return '<span class="letter-body">' + s + '</span>';
     }).join('');
   } else {
-    bodyHTML = '<span class="letter-body">久違尊顏，不勝思念。</span>';
+    bodyHTML = '<span class="letter-body">好久不见，甚是想念。</span>';
   }
 
   var attachText = '';
   if (attachList.length > 0 || customAttach) {
     var allAttach = attachList.slice();
     if (customAttach) allAttach.push(customAttach);
-    attachText = '<span class="letter-body">今隨信附上 ' + allAttach.join('、') + '，聊表孝心。</span>';
+    attachText = '<span class="letter-body">随信附上 ' + allAttach.join('、') + '，聊表心意。</span>';
   }
 
-  var signText = (sRole ? sRole + ' ' : '') + sName + ' 叩上';
+  var signText = (sRole ? sRole + ' ' : '') + sName + ' 敬上';
 
   // 配图水印（灰度半透明，贴在信纸底部）
   var illustWatermark = selectedIllust ? '<img class="letter-paper-illust" src="' + selectedIllust.src + '" alt="' + selectedIllust.name + '">' : '';
@@ -928,30 +965,30 @@ function updateLivePreview() {
     '</div>';
   document.getElementById('letter-live-content').innerHTML = letterHTML;
 
-  // ===== 信封预览（三栏布局：左收信人 + 中僑批 + 右寄信人） =====
+  // ===== 信封预览（三栏布局：左收信人 + 中情書 + 右寄信人） =====
   var receiverDisplay = rRole + rName;
   var senderDisplay = (sRole ? '自 ' + sRole + ' ' : '自 ') + sName + ' 寄';
-  var sealText = rName ? rName + '之印' : '之印';
+  var sealText = rName ? '爱 ' + rName : '爱';
 
   var envelopeHTML =
     '<div class="envelope-display">' +
       // 左栏：收信人
       '<div class="envelope-left">' +
-        '<span class="envelope-badge">銀信</span>' +
+        '<span class="envelope-badge">情书</span>' +
         '<span class="envelope-receiver">' + receiverDisplay + '</span>' +
-        '<span class="envelope-receiver-sub">安啓</span>' +
+        '<span class="envelope-receiver-sub">亲启</span>' +
         '<div class="envelope-seal">' +
           '<div class="envelope-seal-inner">' + sealText + '</div>' +
         '</div>' +
       '</div>' +
-      // 中栏：红色僑批大字
+      // 中栏：红色情書大字
       '<div class="envelope-center">' +
-        '<span class="envelope-qiaopi">僑批</span>' +
+        '<span class="envelope-qiaopi">情書</span>' +
       '</div>' +
       // 右栏：寄信人
       '<div class="envelope-right">' +
-        '<span class="envelope-deco-text">紙短情長</span>' +
-        '<span class="envelope-deco-text">伏惟珍重</span>' +
+        '<span class="envelope-deco-text">纸短情长</span>'
+        '<span class="envelope-deco-text">此生珍重</span>' +
         '<span class="envelope-sender">' + senderDisplay + '</span>' +
       '</div>' +
     '</div>';

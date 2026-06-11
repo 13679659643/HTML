@@ -1,34 +1,34 @@
 <!DOCTYPE html>
 <!--
   ============================================================
-  給阿嬤的情書 · 電影記憶館 — 主页面
+  紙短情長 · 兩個人的博物館 — 主页面
   ============================================================
   
   【项目概述】
-  致敬2026电影《給阿嬤的情書》的互动展览网站。
+  三周年纪念日互动展览网站，致欢欢。
   包含6个展厅 + 收藏系统 + 写信体验，共9个页面。
   纯静态HTML/CSS/JS实现，无框架依赖。
   
   【页面结构】
   - 固定导航栏（含进度条）
-  - 序廳（首页）：Hero视频 + 引言 + 导航卡片
-  - I 阿嬤的銀信：展品图 + 铭牌
-  - II 紙短情長：8封信件画廊 + 灯箱
-  - III 代筆人：展品图 + 铭牌
-  - IV 過番：展品图 + 铭牌
-  - V 百人千言：筛选器 + 100人肖像墙 + 详情弹窗
-  - VI 銀信局：写信表单 + 实时预览
-  - 我的收藏：收藏的人物卡片
-  - 關於：项目说明
+  - 序厅（首页）：Hero视频 + 引言 + 导航卡片
+  - I 初遇：展品图 + 铭牌
+  - II 纸短情长：8封信件画廊 + 灯箱
+  - III 心动：展品图 + 铭牌
+  - IV 同行：展品图 + 铭牌
+  - V 时光相册：筛选器 + 100张照片墙 + 详情弹窗
+  - VI 情书局：写信表单 + 实时预览
+  - 我的收藏：收藏的照片卡片
+  - 关于：项目说明
   
   【技术栈】HTML5 + CSS3 + Vanilla JS + localStorage
-  @version 2.0
+  @version 3.0
 -->
-<html lang="zh-Hant">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>給阿嬤的情書 · 電影記憶館</title>
+  <title>紙短情長 · 兩個人的博物館</title>
   <!-- Google Fonts：书法字体 -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -45,17 +45,17 @@
 <nav class="navbar">
   <div class="nav-inner">
     <div class="nav-links">
-      <a data-route="/" class="active">序廳</a>
-      <a data-route="/hall/1">I 阿嬤的銀信</a>
-      <a data-route="/hall/2">II 紙短情長</a>
-      <a data-route="/hall/3">III 代筆人</a>
-      <a data-route="/hall/4">IV 過番</a>
-      <a data-route="/hall/5">V 百人千言</a>
-      <a data-route="/hall/6">VI 銀信局</a>
+      <a data-route="/" class="active">序厅</a>
+      <a data-route="/hall/1">I 初遇</a>
+      <a data-route="/hall/2">II 纸短情长</a>
+      <a data-route="/hall/3">III 心动</a>
+      <a data-route="/hall/4">IV 同行</a>
+      <a data-route="/hall/5">V 时光相册</a>
+      <a data-route="/hall/6">VI 情书局</a>
       <a data-route="/archive">我的收藏</a>
-      <a data-route="/about">關於</a>
+      <a data-route="/about">关于</a>
     </div>
-    <button class="btn-floorplan" onclick="openFloorplan()">平面圖</button>
+    <button class="btn-floorplan" onclick="openFloorplan()">平面图</button>
   </div>
   <div class="progress-bar"><div class="progress-bar-inner"></div></div>
 </nav>
@@ -72,71 +72,71 @@
     </div>
     <div class="hero-overlay"></div>
     <div class="hero-content">
-      <h1 class="hero-title">給阿嬤的情書 · 電影記憶館</h1>
-      <p class="hero-subtitle">影迷致敬版 · 一八八〇 ── 一九四五</p>
+      <h1 class="hero-title">紙短情長 · 兩個人的博物館</h1>
+      <p class="hero-subtitle">致欢欢的情書 · 三周年纪念版 · 二〇二三 ── 二〇二六</p>
     </div>
-    <button class="hero-enter" onclick="navigate('/hall/1')">↓ 進入序廳</button>
+    <button class="hero-enter" onclick="navigate('/hall/1')">↓ 进入心动的世界</button>
   </section>
 
   <section class="intro-section">
-    <p class="intro-text">「她說阿公一直在寫信。<br>後來才知道，那些信都是別人代筆的。<br>這座電影記憶館，把這部電影裡看不到的細節攤開：<br>銀信、批局、代筆人、紅頭船、和一百個曾經過番的影子。」</p>
+    <p class="intro-text">「从相遇的那天开始。<br>从那以后，每一天都想写信给你。<br>这座纪念館，装满了我们三年的故事：<br>初遇、心动、同行、和一百个属于我们的瞬间。」</p>
   </section>
 
   <!-- 三张入口卡片 -->
   <section class="cards-section">
     <a class="card" onclick="navigate('/hall/1')">
       <div class="card-icon"><svg viewBox="0 0 48 48" fill="none" stroke="rgb(179,74,58)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="14" width="36" height="28" rx="1"/><line x1="6" y1="20" x2="42" y2="20"/><line x1="24" y1="6" x2="24" y2="14"/><polygon points="10,14 24,6 38,14"/><rect x="14" y="26" width="8" height="16"/><rect x="26" y="26" width="8" height="16"/><line x1="18" y1="26" x2="18" y2="42"/><line x1="30" y1="26" x2="30" y2="42"/></svg></div>
-      <h3 class="card-title">推開門</h3>
-      <p class="card-subtitle">走進阿嬤的銀信世界</p>
+      <h3 class="card-title">推开门</h3>
+      <p class="card-subtitle">走进我们的故事</p>
     </a>
     <a class="card" onclick="navigate('/hall/5')">
       <div class="card-icon"><svg viewBox="0 0 48 48" fill="none" stroke="rgb(179,74,58)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="16" height="16" rx="1"/><rect x="26" y="6" width="16" height="16" rx="1"/><rect x="6" y="26" width="16" height="16" rx="1"/><rect x="26" y="26" width="16" height="16" rx="1"/></svg></div>
-      <h3 class="card-title">直奔百人牆</h3>
-      <p class="card-subtitle">一百個過番者的聲音</p>
+      <h3 class="card-title">直奔时光相册</h3>
+      <p class="card-subtitle">一百个我们的瞬间</p>
     </a>
     <a class="card" onclick="navigate('/hall/6')">
       <div class="card-icon"><svg viewBox="0 0 48 48" fill="none" stroke="rgb(179,74,58)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="16" r="10"/><circle cx="16" cy="16" r="4"/><line x1="23" y1="23" x2="42" y2="42"/><line x1="36" y1="42" x2="42" y2="42"/><line x1="42" y1="36" x2="42" y2="42"/><line x1="33" y1="39" x2="37" y2="35"/></svg></div>
-      <h3 class="card-title">替阿嬤寫一封</h3>
-      <p class="card-subtitle">寫下你的銀信</p>
+      <h3 class="card-title">给喜欢的人写一封</h3>
+      <p class="card-subtitle">写下你的情书</p>
     </a>
   </section>
 
   <footer class="footer">
-    <p class="footer-line1">給阿嬤的情書 · 電影記憶館 · 影迷致敬版</p>
-    <p class="footer-line2">致敬二〇二六《給阿嬤的情書》及聯合國教科文組織「僑批」檔案遺產</p>
+    <p class="footer-line1">紙短情長 · 兩個人的博物館 · 三周年紀念版</p>
+    <p class="footer-line2">二〇二三年十二月三日 ── 二〇二六年十二月三日 · 三年一千零九十五天</p>
   </footer>
 </div>
 
 
-<!-- ===== Hall 1: 阿嬤的銀信 ===== -->
+<!-- ===== Hall 1: 初遇 ===== -->
 <!-- 展品信件图 + 铭牌（标题/描述/引用/出处）-->
 <div id="page-hall-1" class="page">
   <div class="hall-page">
-    <div class="exhibit-img"><img src="exhibits/letters/letter-1.jpg" alt="影片起始所念信件"></div>
+    <div class="exhibit-img"><img src="exhibits/letters/letter-1.jpg" alt="我们的初遇"></div>
     <div class="plaque">
       <div class="plaque-line"></div>
       <div class="plaque-inner">
-        <p class="plaque-sub">I · 阿嬤的銀信</p>
-        <h2 class="plaque-title">阿嬤的銀信</h2>
-        <p class="plaque-desc">僑批，是潮汕與閩南遊子寄回家鄉的信。信裡夾錢，錢外裹紙。一封僑批，既是匯款，也是家書。阿嬤等了一輩子，等到的信，都是別人替阿公寫的。</p>
-        <blockquote class="plaque-quote">「她把那封新到的信，疊了又疊，藏進枕頭裡。」</blockquote>
-        <p class="plaque-source">原型出處：廣東省檔案館藏僑批文獻。</p>
+        <p class="plaque-sub">I · 初遇</p>
+        <h2 class="plaque-title">初遇</h2>
+        <p class="plaque-desc">二〇二三年十一月，我们第一次相遇。那天的一切都记得——初冬的风、见面的地点、你穿的那件衣服。你笑起来的样子，像一道光，把我整个冬天都照亮了。后来我才明白，有些相遇，第一眼就注定了永远。从那以后，我的世界里多了一个你，从此再也不想回到没有你的日子。</p>
+        <blockquote class="plaque-quote">「那天之后，你的名字就住进了我的心里。」</blockquote>
+        <p class="plaque-source">2023年12月3日，我们相恋的第一天。</p>
       </div>
     </div>
   </div>
   <div class="hall-nav" style="padding:0 24px;">
-    <a class="disabled">← 上一廳</a>
+    <a class="disabled">← 上一厅</a>
     <span class="counter">I / VI</span>
-    <a onclick="navigate('/hall/2')">下一廳 →</a>
+    <a onclick="navigate('/hall/2')">下一厅 →</a>
   </div>
   <footer class="footer">
-    <p class="footer-line1">給阿嬤的情書 · 電影記憶館 · 影迷致敬版</p>
-    <p class="footer-line2">致敬二〇二六《給阿嬤的情書》及聯合國教科文組織「僑批」檔案遺產</p>
+    <p class="footer-line1">紙短情長 · 兩個人的博物館 · 三周年紀念版</p>
+    <p class="footer-line2">二〇二三年十二月三日 ── 二〇二六年十二月三日 · 三年一千零九十五天</p>
   </footer>
 </div>
 
 
-<!-- ===== Hall 2: 紙短情長 ===== -->
+<!-- ===== Hall 2: 纸短情长 ===== -->
 <!-- 8封信件画廊（可点击放大） + 灯箱 + 铭牌 -->
 <div id="page-hall-2" class="page">
   <div class="hall-page" style="max-width:1100px;">
@@ -144,112 +144,112 @@
     <div class="plaque" style="max-width:720px; margin:0 auto 64px;">
       <div class="plaque-line"></div>
       <div class="plaque-inner">
-        <p class="plaque-sub">II · 紙短情長</p>
-        <h2 class="plaque-title">紙短情長</h2>
-        <p class="plaque-desc">一封僑批的標準結構——紅框包圍正文、豎排書寫、首段稱謂、末段落款、加蓋「銀信」朱印。紙短意豐，三五十字寫盡半生牽掛。當時一封僑批代書費不過三五分錢。</p>
-        <blockquote class="plaque-quote">「字，越寫越穩。」</blockquote>
-        <p class="plaque-source">原型出處：廣東省檔案館藏僑批文獻；字數限制源自當時批局「十六字內四分錢」計價規則。</p>
+        <p class="plaque-sub">II · 纸短情长</p>
+        <h2 class="plaque-title">纸短情长</h2>
+        <p class="plaque-desc">八封情书，写给欢欢。每一封都是某个夜晚的思念，某次分别的不舍，某个瞬间的怦然心动。纸短情长，写不尽三年心事。</p>
+        <blockquote class="plaque-quote">「每一个字，都是想你的证据。」</blockquote>
+        <p class="plaque-source">2023-2026，写给欢欢的八封情书。</p>
       </div>
     </div>
   </div>
   <div class="hall-nav" style="max-width:1100px; margin:0 auto; padding:0 24px;">
-    <a onclick="navigate('/hall/1')">← 上一廳</a>
+    <a onclick="navigate('/hall/1')">← 上一厅</a>
     <span class="counter">II / VI</span>
-    <a onclick="navigate('/hall/3')">下一廳 →</a>
+    <a onclick="navigate('/hall/3')">下一厅 →</a>
   </div>
   <footer class="footer">
-    <p class="footer-line1">給阿嬤的情書 · 電影記憶館 · 影迷致敬版</p>
-    <p class="footer-line2">致敬二〇二六《給阿嬤的情書》及聯合國教科文組織「僑批」檔案遺產</p>
+    <p class="footer-line1">紙短情長 · 兩個人的博物館 · 三周年紀念版</p>
+    <p class="footer-line2">二〇二三年十二月三日 ── 二〇二六年十二月三日 · 三年一千零九十五天</p>
   </footer>
 </div>
 
 
-<!-- ===== Hall 3: 代筆人 ===== -->
+<!-- ===== Hall 3: 心动 ===== -->
 <div id="page-hall-3" class="page">
   <div class="hall-page">
-    <div class="exhibit-img square"><img src="exhibits/04-exhibit-3.jpg" alt="代筆人展品"></div>
+    <div class="exhibit-img square"><img src="exhibits/04-exhibit-3.jpg" alt="心动的瞬间"></div>
     <div class="plaque">
       <div class="plaque-line"></div>
       <div class="plaque-inner">
-        <p class="plaque-sub">III · 代筆人</p>
-        <h2 class="plaque-title">代筆人</h2>
-        <p class="plaque-desc">民國時期僑批業中專有一行：代書人。不識字的家眷把心裡話講給先生，由他化作文言寫上信箋。電影裡有一位代書人替已故的阿公，替了五十年的筆。寫到她不再去領的那天。</p>
-        <blockquote class="plaque-quote">「這支筆，是你阿公臨終那晚，交給我的。」</blockquote>
-        <p class="plaque-source">原型出處：真實僑批業中的「批腳·水客」行業。</p>
+        <p class="plaque-sub">III · 心动</p>
+        <h2 class="plaque-title">心动</h2>
+        <p class="plaque-desc">不知道从哪一刻开始，看到你就会心跳加速。也许是第一次对视，也许是你笑起来的样子，也许只是某个不经意的瞬间。心动不需要理由，但每一刻都值得记住。</p>
+        <blockquote class="plaque-quote">「第一次牵你的手，心跳快得像要飞出来。」</blockquote>
+        <p class="plaque-source">那些心跳加速的瞬间，是爱情最诚实的证据。</p>
       </div>
     </div>
   </div>
   <div class="hall-nav" style="padding:0 24px;">
-    <a onclick="navigate('/hall/2')">← 上一廳</a>
+    <a onclick="navigate('/hall/2')">← 上一厅</a>
     <span class="counter">III / VI</span>
-    <a onclick="navigate('/hall/4')">下一廳 →</a>
+    <a onclick="navigate('/hall/4')">下一厅 →</a>
   </div>
   <footer class="footer">
-    <p class="footer-line1">給阿嬤的情書 · 電影記憶館 · 影迷致敬版</p>
-    <p class="footer-line2">致敬二〇二六《給阿嬤的情書》及聯合國教科文組織「僑批」檔案遺產</p>
+    <p class="footer-line1">紙短情長 · 兩個人的博物館 · 三周年紀念版</p>
+    <p class="footer-line2">二〇二三年十二月三日 ── 二〇二六年十二月三日 · 三年一千零九十五天</p>
   </footer>
 </div>
 
 
-<!-- ===== Hall 4: 過番 ===== -->
+<!-- ===== Hall 4: 同行 ===== -->
 <div id="page-hall-4" class="page">
   <div class="hall-page">
-    <div class="exhibit-img square"><img src="exhibits/05-exhibit-4.jpg" alt="過番展品"></div>
+    <div class="exhibit-img square"><img src="exhibits/05-exhibit-4.jpg" alt="一起走过的路"></div>
     <div class="plaque">
       <div class="plaque-line"></div>
       <div class="plaque-inner">
-        <p class="plaque-sub">IV · 過番</p>
-        <h2 class="plaque-title">過番</h2>
-        <p class="plaque-desc">「過番」是潮汕話，指渡海到南洋謀生。十九世紀末到二十世紀中，數百萬潮汕、福建男性乘紅頭船渡海，多去往泰國、馬來亞、新加坡、菲律賓。他們在番邦做苦力，把工錢一兩兩攢起，寫成僑批，寄回家。</p>
-        <blockquote class="plaque-quote">「你欠了一身賭債——有人對你說：你阿公是泰國的華人富豪。」</blockquote>
-        <p class="plaque-source">原型出處：紅頭船是清代潮汕通商船隻，因船頭塗朱紅得名。</p>
+        <p class="plaque-sub">IV · 同行</p>
+        <h2 class="plaque-title">同行</h2>
+        <p class="plaque-desc">三年里，我们一起走过很多路。有远方的旅行——成都的街头、峨眉山的金顶、青城山的寺庙、都江堰的桥头；也有楼下的散步，和每个送你回家的傍晚。有阳光灿烂的日子，也有风雨同行的时刻。你累了我会背你，我迷路了你会牵我。每一步，都因为有你而不孤单。原来最好的风景不是目的地，而是身边有你。</p>
+        <blockquote class="plaque-quote">「和你一起走的路，每一步都算数。」</blockquote>
+        <p class="plaque-source">2023-2026，我们一起走过的每一段旅程。</p>
       </div>
     </div>
   </div>
   <div class="hall-nav" style="padding:0 24px;">
-    <a onclick="navigate('/hall/3')">← 上一廳</a>
+    <a onclick="navigate('/hall/3')">← 上一厅</a>
     <span class="counter">IV / VI</span>
-    <a onclick="navigate('/hall/5')">下一廳 →</a>
+    <a onclick="navigate('/hall/5')">下一厅 →</a>
   </div>
   <footer class="footer">
-    <p class="footer-line1">給阿嬤的情書 · 電影記憶館 · 影迷致敬版</p>
-    <p class="footer-line2">致敬二〇二六《給阿嬤的情書》及聯合國教科文組織「僑批」檔案遺產</p>
+    <p class="footer-line1">紙短情長 · 兩個人的博物館 · 三周年紀念版</p>
+    <p class="footer-line2">二〇二三年十二月三日 ── 二〇二六年十二月三日 · 三年一千零九十五天</p>
   </footer>
 </div>
 
 
-<!-- ===== Hall 5: 百人千言 ===== -->
+<!-- ===== Hall 5: 时光相册 ===== -->
 <!-- 标题/描述 + 三维筛选器 + 肖像卡片网格 -->
 <div id="page-hall-5" class="page">
   <div class="wall-header">
-    <h2 class="wall-title">百人千言</h2>
-    <p class="wall-subtitle">一八八〇 ── 一九四五 · 一百封僑批</p>
-    <p class="wall-desc">他們離鄉那一日，沒人知道是不是最後一面。</p>
-    <p class="wall-desc">有人寫了五十年，有人只寫了一封。</p>
-    <p class="wall-desc">這裡是一百個虛構的人。他們的字，也是虛構的。但他們的影子，在這片海上散了太久了。</p>
-    <p class="wall-disclaimer">本展廳 100 人物 / 信件 / 肖像均為 AI 文學虛構創作，與真實歷史人物無關。</p>
+    <h2 class="wall-title">时光相册</h2>
+    <p class="wall-subtitle">二〇二三 ── 二〇二六 · 一百张我们的照片</p>
+    <p class="wall-desc">每一张照片，都是一个不想忘记的瞬间。</p>
+    <p class="wall-desc">有远方的风景，有身边的日常。</p>
+    <p class="wall-desc">这里是我们三年来的一百个瞬间。每一张照片背后，都有一段只属于我们的故事。</p>
+    <p class="wall-disclaimer">本展厅 100 张照片均为我们的真实回忆。</p>
   </div>
   <div class="filters" id="filters-container"><!-- JS动态渲染筛选按钮 --></div>
   <div class="portrait-grid" id="portrait-grid"><!-- JS动态渲染肖像卡片 --></div>
   <div class="hall-nav" style="max-width:1200px; margin:0 auto; padding:0 24px;">
-    <a onclick="navigate('/hall/4')">← 上一廳</a>
+    <a onclick="navigate('/hall/4')">← 上一厅</a>
     <span class="counter">V / VI</span>
-    <a onclick="navigate('/hall/6')">下一廳 →</a>
+    <a onclick="navigate('/hall/6')">下一厅 →</a>
   </div>
   <footer class="footer">
-    <p class="footer-line1">給阿嬤的情書 · 電影記憶館 · 影迷致敬版</p>
-    <p class="footer-line2">致敬二〇二六《給阿嬤的情書》及聯合國教科文組織「僑批」檔案遺產</p>
+    <p class="footer-line1">紙短情長 · 兩個人的博物館 · 三周年紀念版</p>
+    <p class="footer-line2">二〇二三年十二月三日 ── 二〇二六年十二月三日 · 三年一千零九十五天</p>
   </footer>
 </div>
 
 
-<!-- ===== Hall 6: 銀信局 ===== -->
+<!-- ===== Hall 6: 情书局 ===== -->
 <!-- 左侧表单 + 右侧实时预览（桌面端双栏，移动端单栏） -->
 <div id="page-hall-6" class="page">
   <div class="hall6-header">
-    <p class="hall6-sub">VI · 銀信局</p>
-    <h2 class="hall6-title">銀信局</h2>
-    <p class="hall6-desc">紙短情長，代書人鋪展一張紅框信紙，候您落筆。</p>
+    <p class="hall6-sub">VI · 情书局</p>
+    <h2 class="hall6-title">情书局</h2>
+    <p class="hall6-desc">纸短情长，铺展一张信纸，写下你想对欢欢说的话。</p>
   </div>
 
   <div class="hall6-split">
@@ -260,7 +260,7 @@
         <label class="form-label">寄信人</label>
         <div class="form-row">
           <select class="form-select" id="sender-role">
-            <option>選擇身份</option><option>阿嬤</option><option>阿公</option><option selected>孫</option><option>兒</option><option>女</option><option>父</option><option>母</option><option>夫</option><option>妻</option><option>戀人</option><option>友</option>
+            <option>选择身份</option><option>男朋友</option><option>老公</option><option selected>我</option><option>笨蛋</option><option>傻瓜</option><option>亲爱的</option><option>宝贝</option><option>你的</option><option>专属</option><option>恋人</option><option>最好的朋友</option>
           </select>
           <input class="form-input" placeholder="姓名" id="sender-name">
         </div>
@@ -270,22 +270,22 @@
         <label class="form-label">收信人</label>
         <div class="form-row">
           <select class="form-select" id="receiver-role">
-            <option>選擇身份</option><option selected>阿嬤</option><option>阿公</option><option>孫</option><option>兒</option><option>女</option><option>父</option><option>母</option><option>夫</option><option>妻</option><option>戀人</option><option>友</option>
+            <option>选择身份</option><option selected>女朋友</option><option>老婆</option><option>欢欢</option><option>小欢</option><option>欢欢宝贝</option><option>亲爱的</option><option>小仙女</option><option>我的唯一</option><option>我的全世界</option><option>恋人</option><option>最好的朋友</option>
           </select>
           <input class="form-input" placeholder="姓名" id="receiver-name">
         </div>
       </div>
       <!-- 心意类别 -->
       <div class="form-group">
-        <label class="form-label">心意類別<span class="form-hint">（至多選五句，已選 <span id="mood-count">0</span>/5）</span></label>
+        <label class="form-label">心意类别<span class="form-hint">（至多选五句，已选 <span id="mood-count">0</span>/5）</span></label>
         <div class="mood-tabs" id="mood-tabs"></div>
         <div class="mood-sentences" id="mood-sentences"></div>
       </div>
       <!-- 随信附上 -->
       <div class="form-group">
-        <label class="form-label">隨信附上</label>
+        <label class="form-label">随信附上</label>
         <div class="toggle-group toggle-group-sm" id="attach-toggles"></div>
-        <input class="form-input" placeholder="其他物品（選填）" id="attach-custom" style="margin-top:12px; width:100%;">
+        <input class="form-input" placeholder="其他礼物（选填）" id="attach-custom" style="margin-top:12px; width:100%;">
       </div>
       <!-- 日期 -->
       <div class="form-group">
@@ -298,11 +298,11 @@
       </div>
       <!-- 配图 -->
       <div class="form-group">
-        <label class="form-label">配圖</label>
+        <label class="form-label">配图</label>
         <div class="illust-grid" id="illust-grid"></div>
       </div>
       <!-- 移动端预览按钮（桌面端隐藏） -->
-      <button class="preview-btn-mobile" onclick="scrollToPreview()">預覽信紙 ↓</button>
+      <button class="preview-btn-mobile" onclick="scrollToPreview()">预览信纸 ↓</button>
     </div>
 
     <!-- 右侧：实时预览面板 -->
@@ -310,36 +310,36 @@
       <!-- 默认提示语（未填写时） -->
       <div id="preview-default">
         <div class="preview-prompt">
-          <p>請先填寫寄信人與收信人姓名，代書先生方可落筆。</p>
+          <p>请先填写寄信人与收信人姓名，情书方可落笔。</p>
         </div>
       </div>
       <!-- 信纸预览区 -->
       <div class="letter-preview-box" id="letter-preview-section" style="display:none;">
-        <h3 class="letter-preview-title">信紙預覽</h3>
+        <h3 class="letter-preview-title">信纸预览</h3>
         <div id="letter-live-content"></div>
       </div>
       <!-- 信封预览区 -->
       <div class="envelope-preview-box" id="envelope-preview-section" style="display:none;">
-        <h3 class="envelope-preview-title">信封預覽</h3>
+        <h3 class="envelope-preview-title">信封预览</h3>
         <div id="envelope-live-content"></div>
       </div>
       <!-- 操作按钮 -->
       <div class="form-actions">
-        <button class="btn-action btn-download-letter" id="btn-dl-letter" disabled onclick="alert('下載功能開發中')">下載信紙</button>
-        <button class="btn-action btn-download-envelope" id="btn-dl-envelope" disabled onclick="alert('下載功能開發中')">下載信封</button>
-        <button class="btn-action btn-share" onclick="alert('分享功能開發中')">分享</button>
+        <button class="btn-action btn-download-letter" id="btn-dl-letter" disabled onclick="alert('下载功能开发中')">下载信纸</button>
+        <button class="btn-action btn-download-envelope" id="btn-dl-envelope" disabled onclick="alert('下载功能开发中')">下载信封</button>
+        <button class="btn-action btn-share" onclick="alert('分享功能开发中')">分享</button>
       </div>
     </div>
   </div>
 
   <div class="hall-nav" style="max-width:1200px; margin:0 auto; padding:0 24px;">
-    <a onclick="navigate('/hall/5')">← 上一廳</a>
+    <a onclick="navigate('/hall/5')">← 上一厅</a>
     <span class="counter">VI / VI</span>
-    <a class="disabled">下一廳 →</a>
+    <a class="disabled">下一厅 →</a>
   </div>
   <footer class="footer">
-    <p class="footer-line1">給阿嬤的情書 · 電影記憶館 · 影迷致敬版</p>
-    <p class="footer-line2">致敬二〇二六《給阿嬤的情書》及聯合國教科文組織「僑批」檔案遺產</p>
+    <p class="footer-line1">紙短情長 · 兩個人的博物館 · 三周年紀念版</p>
+    <p class="footer-line2">二〇二三年十二月三日 ── 二〇二六年十二月三日 · 三年一千零九十五天</p>
   </footer>
 </div>
 
@@ -349,33 +349,33 @@
 <div id="page-archive" class="page">
   <div class="archive-page">
     <h2 class="archive-title">我的收藏</h2>
-    <p class="archive-sub">你收藏的人，會在這裡等你回信</p>
+    <p class="archive-sub">你收藏的照片，会在这里等你回味</p>
     <div id="favorites-container"><!-- JS动态渲染收藏卡片 --></div>
   </div>
   <footer class="footer">
-    <p class="footer-line1">給阿嬤的情書 · 電影記憶館 · 影迷致敬版</p>
-    <p class="footer-line2">致敬二〇二六《給阿嬤的情書》及聯合國教科文組織「僑批」檔案遺產</p>
+    <p class="footer-line1">紙短情長 · 兩個人的博物館 · 三周年紀念版</p>
+    <p class="footer-line2">二〇二三年十二月三日 ── 二〇二六年十二月三日 · 三年一千零九十五天</p>
   </footer>
 </div>
 
 
-<!-- ===== 關於 ===== -->
+<!-- ===== 关于 ===== -->
 <div id="page-about" class="page">
   <div class="about-page">
     <div class="about-line"></div>
-    <p class="about-label">關於</p>
+    <p class="about-label">关于</p>
     <div class="about-body">
-      <p>致敬 2026 電影《給阿嬤的情書》。</p>
-      <p>本站所有人物與信件均為 AI 文學虛構創作。</p>
-      <p>歷史背景參考 UNESCO 世界記憶名錄《僑批》。</p>
-      <p>一八八〇至一九四五，潮汕與閩南僑胞與南洋家鄉之間，</p>
-      <p>往來信件逾十七萬封。本作品願以一百個虛構的影子，</p>
-      <p>致敬其中每一封真實存在過的字。</p>
+      <p>致欢欢，三周年快乐。</p>
+      <p>本站所有照片和文字，都是我们真实的回忆。</p>
+      <p>从2023年12月3日到今天，每一天都值得纪念。</p>
+      <p>三年，一千零九十五天，</p>
+      <p>无数个想你的瞬间。这个网站，用一百张照片，</p>
+      <p>致敬我们共同走过的每一步。</p>
     </div>
   </div>
   <footer class="footer">
-    <p class="footer-line1">給阿嬤的情書 · 電影記憶館 · 影迷致敬版</p>
-    <p class="footer-line2">致敬二〇二六《給阿嬤的情書》及聯合國教科文組織「僑批」檔案遺產</p>
+    <p class="footer-line1">紙短情長 · 兩個人的博物館 · 三周年紀念版</p>
+    <p class="footer-line2">二〇二三年十二月三日 ── 二〇二六年十二月三日 · 三年一千零九十五天</p>
   </footer>
 </div>
 
@@ -407,7 +407,7 @@
 <div class="floorplan-overlay" id="floorplan-overlay" onclick="if(event.target===this)closeFloorplan()">
   <div class="floorplan-modal">
     <button class="floorplan-close" onclick="closeFloorplan()">&times;</button>
-    <h3 class="floorplan-title">館內平面圖</h3>
+    <h3 class="floorplan-title">馆内平面图</h3>
     <svg class="floorplan-svg" viewBox="0 0 600 440">
       <!-- 连线：从中心序廳放射到各展厅 -->
       <line x1="300" y1="200" x2="180" y2="120" stroke="rgba(120,80,40,0.2)" stroke-width="1"/>
@@ -418,58 +418,58 @@
       <line x1="300" y1="200" x2="420" y2="360" stroke="rgba(120,80,40,0.2)" stroke-width="1"/>
       <line x1="300" y1="200" x2="520" y2="80" stroke="rgba(120,80,40,0.2)" stroke-width="1"/>
 
-      <!-- 序廳（中心节点） -->
+      <!-- 序厅（中心节点） -->
       <g onclick="navigate('/');closeFloorplan();" style="cursor:pointer">
         <circle class="node-circle" cx="300" cy="200" r="28" fill="#fdfaf3" stroke="rgba(120,80,40,0.15)" stroke-width="1.5"/>
-        <text x="300" y="205" text-anchor="middle" font-size="13" fill="#1a1410" font-family="Ma Shan Zheng,serif">序廳</text>
+        <text x="300" y="205" text-anchor="middle" font-size="13" fill="#1a1410" font-family="Ma Shan Zheng,serif">序厅</text>
       </g>
 
-      <!-- I — 阿嬤的銀信 -->
+      <!-- I — 初遇 -->
       <g onclick="navigate('/hall/1');closeFloorplan();" style="cursor:pointer">
         <circle class="node-circle" cx="180" cy="120" r="24" fill="#fdfaf3" stroke="rgba(120,80,40,0.15)" stroke-width="1.5"/>
         <text x="180" y="124" text-anchor="middle" font-size="13" fill="#1a1410">I</text>
-        <text x="180" y="156" text-anchor="middle" font-size="11" fill="#8b7d6b">阿嬤的銀信</text>
+        <text x="180" y="156" text-anchor="middle" font-size="11" fill="#8b7d6b">初遇</text>
       </g>
 
-      <!-- II — 紙短情長 -->
+      <!-- II — 纸短情长 -->
       <g onclick="navigate('/hall/2');closeFloorplan();" style="cursor:pointer">
         <circle class="node-circle" cx="420" cy="120" r="24" fill="#fdfaf3" stroke="rgba(120,80,40,0.15)" stroke-width="1.5"/>
         <text x="420" y="124" text-anchor="middle" font-size="13" fill="#1a1410">II</text>
-        <text x="420" y="156" text-anchor="middle" font-size="11" fill="#8b7d6b">紙短情長</text>
+        <text x="420" y="156" text-anchor="middle" font-size="11" fill="#8b7d6b">纸短情长</text>
       </g>
 
-      <!-- III — 代筆人 -->
+      <!-- III — 心动 -->
       <g onclick="navigate('/hall/3');closeFloorplan();" style="cursor:pointer">
         <circle class="node-circle" cx="140" cy="240" r="24" fill="#fdfaf3" stroke="rgba(120,80,40,0.15)" stroke-width="1.5"/>
         <text x="140" y="244" text-anchor="middle" font-size="13" fill="#1a1410">III</text>
-        <text x="140" y="276" text-anchor="middle" font-size="11" fill="#8b7d6b">代筆人</text>
+        <text x="140" y="276" text-anchor="middle" font-size="11" fill="#8b7d6b">心动</text>
       </g>
 
-      <!-- IV — 過番 -->
+      <!-- IV — 同行 -->
       <g onclick="navigate('/hall/4');closeFloorplan();" style="cursor:pointer">
         <circle class="node-circle" cx="460" cy="240" r="24" fill="#fdfaf3" stroke="rgba(120,80,40,0.15)" stroke-width="1.5"/>
         <text x="460" y="244" text-anchor="middle" font-size="13" fill="#1a1410">IV</text>
-        <text x="460" y="276" text-anchor="middle" font-size="11" fill="#8b7d6b">過番</text>
+        <text x="460" y="276" text-anchor="middle" font-size="11" fill="#8b7d6b">同行</text>
       </g>
 
-      <!-- V — 百人千言 -->
+      <!-- V — 时光相册 -->
       <g onclick="navigate('/hall/5');closeFloorplan();" style="cursor:pointer">
         <circle class="node-circle" cx="180" cy="360" r="24" fill="#fdfaf3" stroke="rgba(120,80,40,0.15)" stroke-width="1.5"/>
         <text x="180" y="364" text-anchor="middle" font-size="13" fill="#1a1410">V</text>
-        <text x="180" y="396" text-anchor="middle" font-size="11" fill="#8b7d6b">百人千言</text>
+        <text x="180" y="396" text-anchor="middle" font-size="11" fill="#8b7d6b">时光相册</text>
       </g>
 
-      <!-- VI — 銀信局 -->
+      <!-- VI — 情书局 -->
       <g onclick="navigate('/hall/6');closeFloorplan();" style="cursor:pointer">
         <circle class="node-circle" cx="420" cy="360" r="24" fill="#fdfaf3" stroke="rgba(120,80,40,0.15)" stroke-width="1.5"/>
         <text x="420" y="364" text-anchor="middle" font-size="13" fill="#1a1410">VI</text>
-        <text x="420" y="396" text-anchor="middle" font-size="11" fill="#8b7d6b">銀信局</text>
+        <text x="420" y="396" text-anchor="middle" font-size="11" fill="#8b7d6b">情书局</text>
       </g>
 
-      <!-- 關於（红色节点） -->
+      <!-- 关于（红色节点） -->
       <g onclick="navigate('/about');closeFloorplan();" style="cursor:pointer">
         <circle cx="520" cy="80" r="28" fill="#b34a3a" stroke="none"/>
-        <text x="520" y="85" text-anchor="middle" font-size="13" fill="#fff">關於</text>
+        <text x="520" y="85" text-anchor="middle" font-size="13" fill="#fff">关于</text>
       </g>
     </svg>
   </div>
