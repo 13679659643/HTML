@@ -742,9 +742,10 @@ function renderSentences() {
       '<span class="sentence-checkbox"></span>' +
       '<span class="sentence-text">' + text + '</span>';
     div.addEventListener('click', function() {
-      if (isSelected) {
+      var idx = selectedSentences.indexOf(text);
+      if (idx !== -1) {
         // 取消选中
-        selectedSentences = selectedSentences.filter(function(s) { return s !== text; });
+        selectedSentences.splice(idx, 1);
         div.classList.remove('selected');
       } else {
         // 最多选5项
