@@ -399,7 +399,7 @@ function renderPortraits() {
     var card = document.createElement('div');
     card.className = 'portrait-card';
     card.innerHTML =
-      '<div class="portrait-card-img"><img src="portraits/' + p.num + '.jpg" alt="' + p.name + '" loading="lazy"></div>' +
+      '<div class="portrait-card-img"><img src="portraits/' + p.num + '.jpg" alt="' + p.name + '" loading="lazy" decoding="async"></div>' +
       '<div class="portrait-card-info">' +
         '<span class="portrait-name">' + p.name + '</span>' +
         '<span class="portrait-meta">' + p.meta + '</span>' +
@@ -758,6 +758,54 @@ function renderSentences() {
       updateLivePreview();
     });
     sentencesContainer.appendChild(div);
+  });
+
+  // 自定义心意输入
+  var customRow = document.createElement('div');
+  customRow.className = 'mood-custom-row';
+  customRow.innerHTML =
+    '<span class="mood-custom-trigger">+ 自定义心意</span>' +
+    '<div class="mood-custom-input-wrap" style="display:none;">' +
+      '<input class="mood-custom-input" placeholder="输入你的心意..." maxlength="30">' +
+      '<button class="mood-custom-confirm">✓</button>' +
+      '<button class="mood-custom-cancel">✕</button>' +
+    '</div>';
+  sentencesContainer.appendChild(customRow);
+
+  var trigger = customRow.querySelector('.mood-custom-trigger');
+  var inputWrap = customRow.querySelector('.mood-custom-input-wrap');
+  var input = customRow.querySelector('.mood-custom-input');
+  var confirmBtn = customRow.querySelector('.mood-custom-confirm');
+  var cancelBtn = customRow.querySelector('.mood-custom-cancel');
+
+  trigger.addEventListener('click', function() {
+    trigger.style.display = 'none';
+    inputWrap.style.display = 'flex';
+    input.focus();
+  });
+
+  function submitCustom() {
+    var text = input.value.trim();
+    if (!text) { cancelCustom(); return; }
+    if (selectedSentences.length >= 5) { cancelCustom(); return; }
+    selectedSentences.push(text);
+    updateMoodCount();
+    updateTabChecks();
+    updateLivePreview();
+    cancelCustom();
+  }
+
+  function cancelCustom() {
+    input.value = '';
+    inputWrap.style.display = 'none';
+    trigger.style.display = 'inline';
+  }
+
+  confirmBtn.addEventListener('click', submitCustom);
+  cancelBtn.addEventListener('click', cancelCustom);
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); submitCustom(); }
+    if (e.key === 'Escape') { e.preventDefault(); cancelCustom(); }
   });
 }
 

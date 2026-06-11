@@ -160,13 +160,30 @@ a { text-decoration: none; color: inherit; }
   justify-content: center;
 }
 
+@media (max-width: 700px) {
+  .hero {
+    height: 100vh;
+    height: 100dvh;
+    min-height: 480px;
+  }
+}
+
 .hero-bg {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: #3a2e22; /* 视频未加载时的兜底色 */
+  background: #3a2e22;
 }
 .hero-bg video { width: 100%; height: 100%; object-fit: cover; }
+
+@media (max-width: 700px) {
+  .hero-bg video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+}
 
 /* 上下暗角渐变：增强文字可读性 */
 .hero-overlay {
@@ -193,10 +210,10 @@ a { text-decoration: none; color: inherit; }
   font-size: 42px;
   font-weight: 400;
   color: #fff;
-  line-height: 1.1;
+  line-height: 1.25;
   letter-spacing: 2.1px;
   margin-bottom: 16px;
-  white-space: nowrap;
+  animation: heroFadeIn 1.2s 0.3s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
 .hero-subtitle {
@@ -204,6 +221,30 @@ a { text-decoration: none; color: inherit; }
   color: var(--color-vermilion);
   letter-spacing: 4px;
   text-align: center;
+  animation: heroFadeIn 1.2s 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@keyframes heroFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 700px) {
+  .hero-title {
+    font-size: 26px;
+    letter-spacing: 1.2px;
+    white-space: normal;
+  }
+  .hero-subtitle {
+    font-size: 12px;
+    letter-spacing: 2px;
+  }
 }
 
 /* 进入按钮：呼吸灯动画 */
@@ -535,6 +576,8 @@ a { text-decoration: none; color: inherit; }
   border-radius: 2px;
   transition: transform 0.3s;
   background: var(--color-paper);
+  content-visibility: auto;
+  contain-intrinsic-size: auto 200px;
 }
 .portrait-card:hover { transform: scale(1.03); }
 .portrait-card-img { height: 70%; overflow: hidden; }
@@ -592,6 +635,7 @@ a { text-decoration: none; color: inherit; }
   border-right: 1px solid var(--color-border);
 }
 @media (max-width: 700px) {
+  .person-modal-content { flex-direction: column; max-height: 90vh; overflow-y: auto; }
   .person-profile-panel { width: 100%; border-right: none; border-bottom: 1px solid var(--color-border); }
 }
 
@@ -709,6 +753,24 @@ a { text-decoration: none; color: inherit; }
 .letter-nav button:disabled { opacity: 0.3; cursor: default; }
 .letter-nav button:disabled:hover { border-color: var(--color-border); color: var(--color-text); }
 .letter-nav-counter { font-size: 13px; color: var(--color-text-mute); }
+
+@media (max-width: 700px) {
+  .person-letter-panel {
+    overflow: visible;
+    padding: 20px 16px;
+  }
+  .letter-scroll {
+    max-height: 280px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 20px 16px 16px;
+  }
+  .letter-vertical {
+    font-size: 14px;
+    line-height: 2.2;
+    min-height: 180px;
+  }
+}
 
 .letter-nav-back {
   display: block;
@@ -901,6 +963,64 @@ a { text-decoration: none; color: inherit; }
   color: var(--color-text);
   line-height: 1.6;
 }
+
+/* 自定义心意输入 */
+.mood-custom-row {
+  margin-top: 4px;
+  padding: 8px 0;
+}
+.mood-custom-trigger {
+  font-size: 13px;
+  color: var(--color-vermilion);
+  cursor: pointer;
+  padding: 8px 14px;
+  border: 1px dashed var(--color-vermilion);
+  border-radius: 4px;
+  display: inline-block;
+  transition: all 0.2s;
+}
+.mood-custom-trigger:hover {
+  background: rgba(179, 74, 58, 0.04);
+  border-style: solid;
+}
+.mood-custom-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mood-custom-input {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  border: 1px solid var(--color-vermilion);
+  border-radius: 4px;
+  background: var(--color-paper);
+  color: var(--color-text);
+  outline: none;
+}
+.mood-custom-input::placeholder {
+  color: var(--color-text-mute);
+}
+.mood-custom-confirm,
+.mood-custom-cancel {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-paper);
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.mood-custom-confirm { color: var(--color-vermilion); }
+.mood-custom-cancel { color: var(--color-text-mute); }
+.mood-custom-confirm:hover { background: rgba(179, 74, 58, 0.06); border-color: var(--color-vermilion); }
+.mood-custom-cancel:hover { border-color: var(--color-text); }
 
 /* 配图选择网格 — 4列网格，每项含缩略图和标签 */
 .illust-grid {
