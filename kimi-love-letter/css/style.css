@@ -268,6 +268,58 @@ a { text-decoration: none; color: inherit; }
   50%      { opacity: 1; }
 }
 
+.hero-sound-toggle {
+  position: absolute;
+  top: 72px;
+  right: 24px;
+  z-index: 3;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s, border-color 0.3s;
+}
+.hero-sound-toggle:hover {
+  background: rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+.hero-sound-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+.hero-sound-toggle .sound-on { display: none; }
+.hero-sound-toggle.unmuted .sound-off { display: none; }
+.hero-sound-toggle.unmuted .sound-on { display: block; }
+
+@media (max-width: 700px) {
+  .hero-sound-toggle {
+    top: 64px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+  }
+  .hero-sound-toggle svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* 序厅以下内容延迟渲染，加速首屏 */
+.intro-section,
+.cards-section,
+.footer {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 300px;
+}
+
 /* ============================================================
    6. 首页引言区域
    ============================================================ */

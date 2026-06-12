@@ -122,8 +122,79 @@ window.addEventListener('scroll', updateProgress);
 
 
 /* ============================================================
-   3. 展厅II 纸短情长 — 图片画廊 + 灯箱
+   2.5 Hero视频 — 背景音乐开关 + 移动端兼容
    ============================================================ */
+
+function toggleHeroSound() {
+  var video = document.getElementById('hero-video');
+  var btn = document.getElementById('hero-sound-toggle');
+  if (!video || !btn) return;
+  if (video.muted) {
+    video.muted = false;
+    btn.classList.add('unmuted');
+    btn.title = '关闭背景音乐';
+    video.play().catch(function() {});
+  } else {
+    video.muted = true;
+    btn.classList.remove('unmuted');
+    btn.title = '开启背景音乐';
+  }
+}
+
+(function initHeroVideo() {
+  var video = document.getElementById('hero-video');
+  if (!video) return;
+
+  var isMobile = /Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent);
+
+  video.addEventListener('error', function() {
+    video.style.display = 'none';
+  });
+
+  var loadTimeout = setTimeout(function() {
+    if (video.readyState < 2) {
+      video.style.display = 'none';
+    }
+  }, 8000);
+
+  video.addEventListener('loadeddata', function() {
+    clearTimeout(loadTimeout);
+    if (isMobile) {
+      video.play().catch(function() {
+        video.style.display = 'none';
+      });
+    }
+  });
+
+  if (isMobile) {
+    video.setAttribute('preload', 'metadata');
+    video.setAttribute('playsinline', '');
+  }
+
+  window.addEventListener('pageshow', function(e) {
+    if (e.persisted && video.paused) {
+      video.play().catch(function() {});
+    }
+  });
+
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+      video.pause();
+    } else if (document.getElementById('page-home').classList.contains('active')) {
+      video.play().catch(function() {});
+    }
+  });
+
+  window.addEventListener('hashchange', function() {
+    var hash = window.location.hash.slice(1) || '/';
+    if (hash === '/') {
+      setTimeout(function() {
+        var v = document.getElementById('hero-video');
+        if (v && v.paused) v.play().catch(function() {});
+      }, 100);
+    }
+  });
+})();
 
 /**
  * 8封情书数据：包含图片路径和描述
