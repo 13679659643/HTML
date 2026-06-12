@@ -1181,17 +1181,19 @@ a { text-decoration: none; color: inherit; }
   color: #4a4a4a;
 }
 
-/* 信纸底部装饰配图 — 灰度化处理 */
+/* 信纸装饰配图 — 签名左侧空白区域，半透明水印效果 */
 .letter-paper-illust {
   position: absolute;
-  bottom: 4%;
-  left: 4%;
-  width: 55%;
-  opacity: 0.25;
-  transform: rotate(-4deg);
-  filter: grayscale(100%);
-  mix-blend-mode: multiply;
+  bottom: 36px;
+  left: 28px;
+  width: 160px;
+  height: 160px;
+  object-fit: contain;
+  opacity: 0.38;
+  transform: rotate(-3deg);
+  filter: saturate(0.7) brightness(1.05);
   pointer-events: none;
+  z-index: 0;
 }
 
 /* ----- 信封预览区 ----- */

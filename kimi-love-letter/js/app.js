@@ -1001,8 +1001,8 @@ function updateLivePreview() {
 
   var letterHTML =
     '<div class="letter-paper">' +
-      illustWatermark +
       '<div class="letter-paper-inner">' +
+        illustWatermark +
         '<div class="letter-text">' +
           '<span class="letter-greeting">' + greeting + '</span>' +
           bodyHTML +
@@ -1059,6 +1059,484 @@ function updateLivePreview() {
     el.addEventListener('input', updateLivePreview);
   }
 });
+
+/**
+ * 重置下载按钮状态
+ * @param {string} btnId - 按钮元素ID
+ * @param {string} text - 恢复后的按钮文字
+ */
+function resetDownloadBtn(btnId, text) {
+  var btn = document.getElementById(btnId);
+  if (btn) { btn.disabled = false; btn.textContent = text; }
+}
+
+/**
+ * 将canvas转为PNG触发浏览器下载
+ * 包含跨域安全兜底：toDataURL可能因canvas被污染抛出SecurityError
+ * @param {HTMLCanvasElement} canvas - 要下载的canvas
+ * @param {string} filename - 下载文件名
+ * @param {string} btnId - 对应按钮ID，用于重置状态
+ * @param {string} btnText - 按钮恢复文字
+ */
+function triggerCanvasDownload(canvas, filename, btnId, btnText) {
+  try {
+    var dataUrl = canvas.toDataURL('image/png');
+    var link = document.createElement('a');
+    link.download = filename;
+    link.href = dataUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    resetDownloadBtn(btnId, btnText);
+  } catch (e) {
+    resetDownloadBtn(btnId, btnText);
+    alert('下载失败：图片生成出错，请重试');
+  }
+}
+
+/**
+ * 收集情书局表单数据，返回信纸绘制所需的全部信息
+ * @returns {Object} 信纸数据对象
+ */
+function collectLetterData() {
+  var senderRole = document.getElementById('sender-role').value;
+  var senderName = document.getElementById('sender-name').value || '';
+  var receiverRole = document.getElementById('receiver-role').value;
+  var receiverName = document.getElementById('receiver-name').value || '';
+  var dateYear = document.getElementById('date-year') ? document.getElementById('date-year').value : '';
+  var dateMonth = document.getElementById('date-month') ? document.getElementById('date-month').value : '';
+  var dateDay = document.getElementById('date-day') ? document.getElementById('date-day').value : '';
+  var customAttach = document.getElementById('attach-custom') ? document.getElementById('attach-custom').value : '';
+  var attachList = Object.keys(selectedAttachments);
+
+  var sName = senderName || '○○';
+  var rName = receiverName || '○○';
+  var sRole = senderRole !== '选择身份' ? senderRole : '';
+  var rRole = receiverRole !== '选择身份' ? receiverRole : '';
+
+  /* 问候语 */
+  var greeting = (rRole ? rRole + ' ' : '') + rName + '，展信欢颜。';
+
+  /* 正文段落（选中的心意句子，默认一句） */
+  var bodies = selectedSentences.length > 0 ? selectedSentences.slice() : ['好久不见，甚是想念。'];
+
+  /* 附件附言 */
+  var attachText = '';
+  if (attachList.length > 0 || customAttach) {
+    var allAttach = attachList.slice();
+    if (customAttach) allAttach.push(customAttach);
+    attachText = '随信附上 ' + allAttach.join('、') + '，聊表心意。';
+  }
+
+  /* 署名 */
+  var signText = (sRole ? sRole + ' ' : '') + sName + ' 敬上';
+
+  /* 日期 */
+  var dateStr = dateYear + dateMonth + dateDay;
+
+  return {
+    greeting: greeting,
+    bodies: bodies,
+    attachText: attachText,
+    signText: signText,
+    dateStr: dateStr,
+    illustSrc: selectedIllust ? selectedIllust.src : null
+  };
+}
+
+/**
+ * 中文自动换行绘制：逐字测量宽度，超出maxWidth时换行
+ * @param {CanvasRenderingContext2D} ctx - canvas上下文
+ * @param {string} text - 要绘制的文字
+ * @param {number} x - 起始X坐标
+ * @param {number} y - 起始Y坐标
+ * @param {number} maxWidth - 最大行宽
+ * @param {number} lineH - 行高
+ * @param {number} indent - 首行缩进宽度（0表示不缩进）
+ * @returns {number} 绘制结束后的Y坐标
+ */
+function drawWrappedText(ctx, text, x, y, maxWidth, lineH, indent) {
+  var curX = x + indent;
+  var curMaxW = maxWidth - indent;
+  var isFirstLine = true;
+
+  for (var ci = 0; ci < text.length;) {
+    var lineW = 0;
+    var lineEnd = ci;
+    while (lineEnd < text.length) {
+      var ch = text.charAt(lineEnd);
+      var cw = ctx.measureText(ch).width;
+      if (lineW + cw > curMaxW && lineEnd > ci) break;
+      lineW += cw;
+      lineEnd++;
+    }
+    ctx.fillText(text.substring(ci, lineEnd), curX, y);
+    y += lineH;
+    ci = lineEnd;
+    /* 首行结束后，后续行回到正常起始位置 */
+    if (isFirstLine) {
+      curX = x;
+      curMaxW = maxWidth;
+      isFirstLine = false;
+    }
+  }
+  return y;
+}
+
+/**
+ * 使用Canvas 2D API绘制信纸图片（不依赖html2canvas，无跨域问题）
+ * 布局与CSS .letter-paper / .letter-paper-inner 完全对应
+ * @param {Object} data - collectLetterData()返回的数据
+ * @param {Function} callback - 绘制完成回调，参数为canvas
+ */
+function generateLetterCanvas(data, callback) {
+  /* 画布尺寸与缩放：CSS尺寸560×800，2倍清晰度 */
+  var W = 560, H = 800, S = 2;
+  var canvas = document.createElement('canvas');
+  canvas.width = W * S;
+  canvas.height = H * S;
+  var ctx = canvas.getContext('2d');
+  ctx.scale(S, S);
+
+  var fontStack = '"Ma Shan Zheng", "Long Cang", "Liu Jian Mao Cao", "LXGW WenKai TC", "KaiTi", "STKaiti", serif';
+
+  /* 外层背景：斜向渐变，对应 .letter-paper background */
+  var outerGrad = ctx.createLinearGradient(0, 0, W, H);
+  outerGrad.addColorStop(0, '#e8dcc4');
+  outerGrad.addColorStop(1, '#d4c4a0');
+  ctx.fillStyle = outerGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  /* 内层：古纸纹理渐变，对应 .letter-paper-inner background */
+  var pad = 20; /* .letter-paper padding: 20px */
+  var innerX = pad, innerY = pad;
+  var innerW = W - pad * 2, innerH = H - pad * 2;
+  var innerGrad = ctx.createLinearGradient(0, innerY, 0, innerY + innerH);
+  innerGrad.addColorStop(0, '#f0e6d0');
+  innerGrad.addColorStop(1, '#e4d8be');
+  ctx.fillStyle = innerGrad;
+  ctx.fillRect(innerX, innerY, innerW, innerH);
+
+  /* 红色内边框，对应 .letter-paper-inner::before { inset: 18px 16px; border: 3px solid vermilion } */
+  var borderInsetY = 18, borderInsetX = 16;
+  ctx.strokeStyle = '#b34a3a';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(
+    innerX + borderInsetX,
+    innerY + borderInsetY,
+    innerW - borderInsetX * 2,
+    innerH - borderInsetY * 2
+  );
+
+  /* 文字区域参数，对应 .letter-paper-inner padding: 36px 28px */
+  var textPadX = 28, textPadY = 36;
+  var textX = innerX + textPadX;
+  var textW = innerW - textPadX * 2;
+  var fontSize = 18;
+  var lineH = Math.round(fontSize * 2.2); /* line-height: 2.2 */
+  var indentW = fontSize * 2; /* text-indent: 2em */
+
+  ctx.font = fontSize + 'px ' + fontStack;
+  ctx.fillStyle = '#1a1a1a';
+  ctx.textBaseline = 'top';
+  var curY = innerY + textPadY;
+
+  /* 问候语（不缩进，对应 .letter-greeting） */
+  curY = drawWrappedText(ctx, data.greeting, textX, curY, textW, lineH, 0);
+  curY += 16; /* margin-bottom: 16px */
+
+  /* 正文段落（首行缩进2em，对应 .letter-body text-indent: 2em） */
+  for (var bi = 0; bi < data.bodies.length; bi++) {
+    curY = drawWrappedText(ctx, data.bodies[bi], textX, curY, textW, lineH, indentW);
+    curY += 16; /* margin-bottom: 16px */
+  }
+
+  /* 附件附言（首行缩进2em） */
+  if (data.attachText) {
+    curY = drawWrappedText(ctx, data.attachText, textX, curY, textW, lineH, indentW);
+    curY += 16;
+  }
+
+  /* 署名（右对齐，对应 .letter-sign text-align: right） */
+  curY += 20; /* margin-top: 20px */
+  ctx.textAlign = 'right';
+  ctx.fillText(data.signText, textX + textW, curY);
+  curY += lineH;
+
+  /* 日期（右对齐，小字灰色，对应 .letter-date） */
+  if (data.dateStr) {
+    ctx.font = '14px ' + fontStack;
+    ctx.fillStyle = '#4a4a4a';
+    ctx.fillText(data.dateStr, textX + textW, curY);
+  }
+  ctx.textAlign = 'left';
+
+  /* 配图水印：如果无配图，直接返回canvas */
+  if (!data.illustSrc) { callback(canvas); return; }
+
+  /* 安全加载配图：先加载到临时canvas转dataURL，避免污染主canvas */
+  var img = new Image();
+  img.onload = function() {
+    var tmpC = document.createElement('canvas');
+    tmpC.width = img.naturalWidth;
+    tmpC.height = img.naturalHeight;
+    tmpC.getContext('2d').drawImage(img, 0, 0);
+    try {
+      var dataUrl = tmpC.toDataURL('image/png');
+      var safeImg = new Image();
+      safeImg.onload = function() {
+        try {
+          /* 配图定位：对应 .letter-paper-illust { bottom: 36px; left: 28px; width: 160px; height: 160px } */
+          var illustW = 160, illustH = 160;
+          var illustX = innerX + textPadX;
+          var illustY = innerY + innerH - 36 - illustH;
+          ctx.save();
+          ctx.globalAlpha = 0.38; /* opacity: 0.38 */
+          ctx.translate(illustX + illustW / 2, illustY + illustH / 2);
+          ctx.rotate(-3 * Math.PI / 180); /* transform: rotate(-3deg) */
+          ctx.drawImage(safeImg, -illustW / 2, -illustH / 2, illustW, illustH);
+          ctx.restore();
+        } catch (e) { /* 配图合成失败不影响整体 */ }
+        callback(canvas);
+      };
+      safeImg.onerror = function() { callback(canvas); };
+      safeImg.src = dataUrl;
+    } catch (e) {
+      /* 临时canvas被污染，跳过配图 */
+      callback(canvas);
+    }
+  };
+  img.onerror = function() { callback(canvas); };
+  img.src = data.illustSrc;
+}
+
+/**
+ * 下载信纸
+ * 流程：收集表单数据 → Canvas 2D API绘制 → 触发PNG下载
+ */
+function downloadLetter() {
+  var btn = document.getElementById('btn-dl-letter');
+  if (btn) { btn.disabled = true; btn.textContent = '生成中...'; }
+
+  var data = collectLetterData();
+  generateLetterCanvas(data, function(canvas) {
+    triggerCanvasDownload(canvas, '情书-信纸.png', 'btn-dl-letter', '下载信纸');
+  });
+}
+
+/**
+ * 分享信纸 — 组合降级方案
+ * 1. Web Share API（移动端优先）：调用系统原生分享面板
+ * 2. 剪贴板复制（桌面端降级）：图片复制到剪贴板，提示粘贴分享
+ * 3. 手动提示（都不支持）：引导用户使用下载功能
+ */
+function shareLetter() {
+  var btn = document.getElementById('btn-share');
+  if (btn) { btn.disabled = true; btn.textContent = '生成中...'; }
+
+  var resetShareBtn = function() {
+    if (btn) { btn.disabled = false; btn.textContent = '分享'; }
+  };
+
+  var data = collectLetterData();
+  generateLetterCanvas(data, function(canvas) {
+    /* 将canvas转为Blob，用于分享或剪贴板写入 */
+    canvas.toBlob(function(blob) {
+      if (!blob) {
+        resetShareBtn();
+        alert('图片生成失败，请重试');
+        return;
+      }
+
+      /* 方案1：Web Share API — 移动端原生分享面板 */
+      if (navigator.share && navigator.canShare) {
+        var file = new File([blob], '情书-信纸.png', { type: 'image/png' });
+        var shareData = { files: [file] };
+        if (navigator.canShare(shareData)) {
+          navigator.share(shareData).then(function() {
+            resetShareBtn();
+          }).catch(function() {
+            resetShareBtn();
+          });
+          return;
+        }
+      }
+
+      /* 方案2：复制图片到剪贴板 — 桌面端可直接Ctrl+V粘贴分享 */
+      if (navigator.clipboard && typeof ClipboardItem !== 'undefined') {
+        var item = new ClipboardItem({ 'image/png': blob });
+        navigator.clipboard.write([item]).then(function() {
+          resetShareBtn();
+          alert('信纸已复制到剪贴板，可直接粘贴分享');
+        }).catch(function() {
+          resetShareBtn();
+          alert('复制失败，请使用「下载信纸」保存后手动分享');
+        });
+        return;
+      }
+
+      /* 方案3：都不支持，引导用户手动下载分享 */
+      resetShareBtn();
+      alert('当前浏览器不支持直接分享，请使用「下载信纸」保存后手动分享');
+    }, 'image/png');
+  });
+}
+
+/**
+ * 下载信封 — 使用Canvas 2D API直接绘制（无跨域问题）
+ * 信封为纯文字+几何图形，不涉及外部图片，因此无需html2canvas
+ * 布局：左栏(22%)收信人+印章 | 中栏(50%)红色情書大字 | 右栏(28%)寄信人+装饰
+ */
+function downloadEnvelope() {
+  var btn = document.getElementById('btn-dl-envelope');
+  if (btn) { btn.disabled = true; btn.textContent = '生成中...'; }
+
+  /* 收集表单数据 */
+  var senderRole = document.getElementById('sender-role').value;
+  var senderName = document.getElementById('sender-name').value || '';
+  var receiverRole = document.getElementById('receiver-role').value;
+  var receiverName = document.getElementById('receiver-name').value || '';
+
+  var sName = senderName || '○○';
+  var rName = receiverName || '○○';
+  var sRole = senderRole !== '选择身份' ? senderRole : '';
+  var rRole = receiverRole !== '选择身份' ? receiverRole : '';
+
+  var receiverDisplay = rRole + rName;
+  var senderDisplay = (sRole ? '自 ' + sRole + ' ' : '自 ') + sName + ' 寄';
+  var sealText = rName ? '爱 ' + rName : '爱';
+
+  /* 创建2倍分辨率canvas，确保下载图片清晰 */
+  var W = 360, H = 560, S = 2;
+  var canvas = document.createElement('canvas');
+  canvas.width = W * S;
+  canvas.height = H * S;
+  var ctx = canvas.getContext('2d');
+  ctx.scale(S, S);
+
+  var fontStack = '"Ma Shan Zheng", "Long Cang", "Liu Jian Mao Cao", "LXGW WenKai TC", "KaiTi", "STKaiti", serif';
+  var fontKai = '"LXGW WenKai TC", "KaiTi", "STKaiti", serif';
+
+  /* 整体背景：牛皮纸色渐变 */
+  var grad = ctx.createLinearGradient(0, 0, W * 0.4, H);
+  grad.addColorStop(0, '#d4aa72');
+  grad.addColorStop(0.6, '#c49a62');
+  grad.addColorStop(1, '#ba9258');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  /* 三栏尺寸 */
+  var leftW = W * 0.22;
+  var centerW = W * 0.50;
+  var rightW = W * 0.28;
+
+  /* 左栏+右栏：米色渐变背景 */
+  var leftGrad = ctx.createLinearGradient(0, 0, 0, H);
+  leftGrad.addColorStop(0, '#f0e6d0');
+  leftGrad.addColorStop(1, '#e4d8be');
+  ctx.fillStyle = leftGrad;
+  ctx.fillRect(0, 0, leftW, H);
+  ctx.fillRect(W - rightW, 0, rightW, H);
+
+  /* 中栏：红色渐变背景 */
+  var centerGrad = ctx.createLinearGradient(0, 0, 0, H);
+  centerGrad.addColorStop(0, '#c03525');
+  centerGrad.addColorStop(1, '#9e2515');
+  ctx.fillStyle = centerGrad;
+  ctx.fillRect(leftW, 0, centerW, H);
+
+  /* 左上角「情书」标签 — 金属质感小徽章 */
+  ctx.font = '10px ' + fontStack;
+  ctx.fillStyle = '#2a2a2a';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  var badgeW = 32, badgeH = 16;
+  var badgeX = leftW / 2 - badgeW / 2;
+  var badgeY = 12;
+  ctx.fillStyle = '#c2c0ba';
+  ctx.fillRect(badgeX, badgeY, badgeW, badgeH);
+  ctx.strokeStyle = '#4a4a4a';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(badgeX, badgeY, badgeW, badgeH);
+  ctx.fillStyle = '#2a2a2a';
+  ctx.font = '9px ' + fontStack;
+  ctx.fillText('情书', leftW / 2, badgeY + badgeH / 2);
+
+  /* 左栏：收信人竖排大字 */
+  ctx.fillStyle = '#1a1410';
+  ctx.font = '24px ' + fontStack;
+  ctx.textAlign = 'center';
+  var recvChars = receiverDisplay.split('');
+  var recvStartY = 60;
+  var recvSpacing = 32;
+  for (var ri = 0; ri < recvChars.length; ri++) {
+    ctx.fillText(recvChars[ri], leftW / 2, recvStartY + ri * recvSpacing);
+  }
+
+  /* 左栏：「亲启」竖排小字 */
+  ctx.font = '14px ' + fontKai;
+  var subStartY = recvStartY + recvChars.length * recvSpacing + 8;
+  var subChars = '亲启'.split('');
+  for (var si = 0; si < subChars.length; si++) {
+    ctx.fillText(subChars[si], leftW / 2, subStartY + si * 20);
+  }
+
+  /* 左下角：圆形印章（双圈+文字） */
+  var sealCX = leftW / 2;
+  var sealCY = H - 40;
+  var sealR = 20;
+  ctx.save();
+  ctx.translate(sealCX, sealCY);
+  ctx.rotate(-7 * Math.PI / 180); /* 印章微倾斜，模拟手工盖印效果 */
+  ctx.beginPath();
+  ctx.arc(0, 0, sealR, 0, Math.PI * 2);
+  ctx.strokeStyle = '#c03525';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0, 0, sealR - 4, 0, Math.PI * 2);
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.fillStyle = '#c03525';
+  ctx.font = '8px ' + fontStack;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(sealText, 0, 0);
+  ctx.restore();
+
+  /* 中栏：红色背景上「情書」竖排大字 */
+  ctx.fillStyle = '#1a1a1a';
+  ctx.font = '48px ' + fontStack;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  var qiaopiChars = '情書'.split('');
+  var qiaopiX = leftW + centerW / 2;
+  var qiaopiStartY = H / 2 - 30;
+  for (var qi = 0; qi < qiaopiChars.length; qi++) {
+    ctx.fillText(qiaopiChars[qi], qiaopiX, qiaopiStartY + qi * 60);
+  }
+
+  /* 右栏：「纸短情长」竖排装饰文字 */
+  var decoChars = '纸短情长'.split('');
+  ctx.fillStyle = '#1a1410';
+  ctx.font = '18px ' + fontStack;
+  var rightCX = W - rightW / 2;
+  var decoStartY = 20;
+  for (var di = 0; di < decoChars.length; di++) {
+    ctx.fillText(decoChars[di], rightCX, decoStartY + di * 26);
+  }
+
+  /* 右栏：寄信人竖排信息 */
+  ctx.fillStyle = '#1a1410';
+  ctx.font = '16px ' + fontStack;
+  var senderChars = senderDisplay.split('');
+  var senderStartY = decoStartY + decoChars.length * 26 + 20;
+  for (var ei = 0; ei < senderChars.length; ei++) {
+    ctx.fillText(senderChars[ei], rightCX, senderStartY + ei * 22);
+  }
+
+  triggerCanvasDownload(canvas, '情书-信封.png', 'btn-dl-envelope', '下载信封');
+}
 
 
 /* ============================================================
