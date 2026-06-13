@@ -412,6 +412,52 @@ a { text-decoration: none; color: inherit; }
 .exhibit-img img { width: 100%; height: 100%; object-fit: contain; }
 .exhibit-img.square { max-width: 600px; aspect-ratio: 1/1; }
 
+.exhibit-duo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  max-width: 720px;
+  margin: 0 auto 64px;
+}
+.exhibit-duo-item {
+  cursor: pointer;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: transform 0.25s, box-shadow 0.25s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.exhibit-duo-item:hover {
+  transform: translateY(-2px);
+}
+.exhibit-duo-item img {
+  width: 100%;
+  aspect-ratio: 3/4;
+  object-fit: contain;
+  padding: 12px;
+}
+.exhibit-duo-label {
+  font-size: 13px;
+  color: var(--color-text-mute);
+  padding: 0 0 12px;
+  letter-spacing: 0.06em;
+}
+
+@media (max-width: 640px) {
+  .exhibit-duo {
+    gap: 10px;
+    margin-bottom: 40px;
+  }
+  .exhibit-duo-item img {
+    padding: 8px;
+  }
+  .exhibit-duo-label {
+    font-size: 12px;
+    padding-bottom: 8px;
+  }
+}
+
 /* 铭牌区域：纸色背景 + 顶部红线 */
 .plaque {
   background: var(--color-paper);
@@ -1074,6 +1120,24 @@ a { text-decoration: none; color: inherit; }
 .mood-custom-confirm:hover { background: rgba(179, 74, 58, 0.06); border-color: var(--color-vermilion); }
 .mood-custom-cancel:hover { border-color: var(--color-text); }
 
+.btn-reset-form {
+  margin-top: 12px;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--color-text-mute);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-reset-form:hover {
+  color: var(--color-vermilion);
+  border-color: var(--color-vermilion);
+  background: rgba(179, 74, 58, 0.04);
+}
+
 /* 配图选择网格 — 4列网格，每项含缩略图和标签 */
 .illust-grid {
   display: grid;
@@ -1109,6 +1173,29 @@ a { text-decoration: none; color: inherit; }
 }
 .illust-item.active span {
   color: var(--color-vermilion);
+}
+
+.btn-illust-expand {
+  margin-top: 10px;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--color-text-mute);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+.btn-illust-expand:hover {
+  color: var(--color-vermilion);
+  border-color: var(--color-vermilion);
+  background: rgba(179, 74, 58, 0.04);
+}
+
+.illust-grid-more {
+  margin-top: 8px;
 }
 
 /* 移动端预览按钮 — 仅在移动端显示，桌面端隐藏 */

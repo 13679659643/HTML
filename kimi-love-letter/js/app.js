@@ -211,6 +211,11 @@ var letterData = [
   { src: 'exhibits/letters/letter-8.jpg', alt: '第八封：三周年寄语' }
 ];
 
+var firstMeetData = [
+  { src: 'exhibits/FirstMeeting/FirstMeetingLetter.png', alt: '信' },
+  { src: 'exhibits/FirstMeeting/FirstEncounterEnvelope.png', alt: '信封' }
+];
+
 /** 渲染画廊网格 — 8张可点击的信件缩略图 */
 (function renderGallery() {
   var galleryGrid = document.getElementById('gallery-grid');
@@ -225,16 +230,19 @@ var letterData = [
 
 /** 灯箱当前显示的图片索引 */
 var currentLightbox = 0;
+/** 灯箱当前使用的数据源 */
+var currentLightboxData = letterData;
 
 /**
- * 打开灯箱 — 显示指定索引的信件大图
- * @param {number} index - 信件索引（0-7）
+ * 打开灯箱 — 显示指定索引的大图
+ * @param {number} index - 图片索引
  */
 function openLightbox(index) {
   currentLightbox = index;
+  currentLightboxData = letterData;
   var lb = document.getElementById('lightbox');
-  document.getElementById('lightbox-img').src = letterData[index].src;
-  document.getElementById('lightbox-counter').textContent = (index + 1) + ' / ' + letterData.length;
+  document.getElementById('lightbox-img').src = currentLightboxData[index].src;
+  document.getElementById('lightbox-counter').textContent = (index + 1) + ' / ' + currentLightboxData.length;
   lb.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -250,9 +258,19 @@ function closeLightbox() {
  * @param {number} dir - 方向：-1为上一张，1为下一张
  */
 function lightboxNav(dir) {
-  currentLightbox = (currentLightbox + dir + letterData.length) % letterData.length;
-  document.getElementById('lightbox-img').src = letterData[currentLightbox].src;
-  document.getElementById('lightbox-counter').textContent = (currentLightbox + 1) + ' / ' + letterData.length;
+  currentLightbox = (currentLightbox + dir + currentLightboxData.length) % currentLightboxData.length;
+  document.getElementById('lightbox-img').src = currentLightboxData[currentLightbox].src;
+  document.getElementById('lightbox-counter').textContent = (currentLightbox + 1) + ' / ' + currentLightboxData.length;
+}
+
+function openFirstMeetLightbox(index) {
+  currentLightbox = index;
+  currentLightboxData = firstMeetData;
+  var lb = document.getElementById('lightbox');
+  document.getElementById('lightbox-img').src = firstMeetData[index].src;
+  document.getElementById('lightbox-counter').textContent = (index + 1) + ' / ' + firstMeetData.length;
+  lb.classList.add('open');
+  document.body.style.overflow = 'hidden';
 }
 
 
@@ -749,15 +767,29 @@ var attachments = ['玫瑰花', '巧克力', '手写信', '小蛋糕', '星星�
 
 /** 配图选项列表 — 8张插画 */
 var illusts = [
-  { src: 'exhibits/illust-redhead-boat.png', name: '爱心' },
-  { src: 'exhibits/illust-kapok.png',        name: '花朵' },
-  { src: 'exhibits/illust-olive.png',        name: '月亮' },
-  { src: 'exhibits/illust-goose.png',        name: '星星' },
-  { src: 'exhibits/illust-bridge.png',       name: '彩虹' },
-  { src: 'exhibits/illust-tricycle.png',     name: '气球' },
-  { src: 'exhibits/illust-miguo.png',        name: '蛋糕' },
-  { src: 'exhibits/illust-yingge.png',       name: '戒指' }
+  { src: 'exhibits/illust-redhead-boat.png', name: '紅頭船' },
+  { src: 'exhibits/illust-kapok.png',        name: '木棉花' },
+  { src: 'exhibits/illust-olive.png',        name: '油柑' },
+  { src: 'exhibits/illust-goose.png',        name: '獅頭鵝' },
+  { src: 'exhibits/illust-bridge.png',       name: '石板橋' },
+  { src: 'exhibits/illust-tricycle.png',     name: '三輪車' },
+  { src: 'exhibits/illust-miguo.png',        name: '無米粿' },
+  { src: 'exhibits/illust-yingge.png',       name: '英歌' }
 ];
+
+/** 更多配图 — 展开后显示 */
+var moreIllusts = [
+  { src: 'exhibits/LoveLetterBureauIllustration/爱心.png', name: '爱心' },
+  { src: 'exhibits/LoveLetterBureauIllustration/蛋糕.png', name: '蛋糕' },
+  { src: 'exhibits/LoveLetterBureauIllustration/戒指.png', name: '戒指' },
+  { src: 'exhibits/LoveLetterBureauIllustration/月亮.png', name: '月亮' },
+  { src: 'exhibits/LoveLetterBureauIllustration/水墨山水.png', name: '水墨山水' },
+  { src: 'exhibits/LoveLetterBureauIllustration/竹子.png', name: '竹子' },
+  { src: 'exhibits/LoveLetterBureauIllustration/花瓣.png', name: '花瓣' },
+  { src: 'exhibits/LoveLetterBureauIllustration/花瓣 .png', name: '花瓣' }
+];
+
+var illustExpanded = false;
 
 /** 当前选中的句子（跨分类汇总） */
 var selectedSentences = [];
@@ -769,7 +801,7 @@ var activeMoodIndex = 0;
 var selectedAttachments = {};
 
 /** 当前选中的配图 */
-var selectedIllust = illusts[0]; // 默认选中第一张配图「爱心」
+var selectedIllust = illusts[0];
 
 /**
  * 渲染心意类别标签和句子列表
@@ -819,8 +851,8 @@ function renderSentences() {
         selectedSentences.splice(idx, 1);
         div.classList.remove('selected');
       } else {
-        // 最多选5项
-        if (selectedSentences.length >= 5) return;
+        // 最多选10项
+        if (selectedSentences.length >= 10) return;
         selectedSentences.push(text);
         div.classList.add('selected');
       }
@@ -859,12 +891,13 @@ function renderSentences() {
   function submitCustom() {
     var text = input.value.trim();
     if (!text) { cancelCustom(); return; }
-    if (selectedSentences.length >= 5) { cancelCustom(); return; }
+    if (selectedSentences.length >= 10) { cancelCustom(); return; }
     selectedSentences.push(text);
     updateMoodCount();
     updateTabChecks();
     updateLivePreview();
-    cancelCustom();
+    input.value = '';
+    input.focus();
   }
 
   function cancelCustom() {
@@ -904,6 +937,39 @@ function updateTabChecks() {
   });
 }
 
+function resetForm() {
+  document.getElementById('attach-custom').value = '';
+
+  selectedSentences = [];
+  selectedAttachments = {};
+  selectedIllust = illusts[0];
+
+  var now = new Date();
+  var digitMap = ['〇', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+  function yearToChinese(y) {
+    var s = '';
+    String(y).split('').forEach(function(ch) { s += digitMap[parseInt(ch)] || ch; });
+    return s + '年';
+  }
+  var dateYear = document.getElementById('date-year');
+  if (dateYear) dateYear.value = yearToChinese(now.getFullYear());
+  if (dateYear) dateYear.dispatchEvent(new Event('change'));
+
+  updateMoodCount();
+  updateTabChecks();
+  updateLivePreview();
+
+  renderToggleGroup('attach-toggles', attachments, selectedAttachments);
+  renderIllustGrid();
+  renderSentences();
+
+  var moreGrid = document.getElementById('illust-grid-more');
+  var btn = document.getElementById('btn-illust-expand');
+  if (moreGrid) moreGrid.style.display = 'none';
+  if (btn) btn.textContent = '展开更多配图 ↓';
+  illustExpanded = false;
+}
+
 /**
  * 渲染附件选择切换组
  * 将附件列表渲染为可点击的切换按钮
@@ -940,9 +1006,29 @@ function renderToggleGroup(containerId, items, storage) {
  */
 function renderIllustGrid() {
   var grid = document.getElementById('illust-grid');
+  grid.innerHTML = '';
   illusts.forEach(function(il, i) {
     var div = document.createElement('div');
-    div.className = 'illust-item' + (i === 0 ? ' active' : '');
+    div.className = 'illust-item' + (selectedIllust === il ? ' active' : '');
+    div.innerHTML = '<img src="' + il.src + '" alt="' + il.name + '"><span>' + il.name + '</span>';
+    div.addEventListener('click', function() {
+      document.querySelectorAll('.illust-item').forEach(function(d) { d.classList.remove('active'); });
+      div.classList.add('active');
+      selectedIllust = il;
+      updateLivePreview();
+    });
+    grid.appendChild(div);
+  });
+
+  renderMoreIllustGrid();
+}
+
+function renderMoreIllustGrid() {
+  var grid = document.getElementById('illust-grid-more');
+  grid.innerHTML = '';
+  moreIllusts.forEach(function(il) {
+    var div = document.createElement('div');
+    div.className = 'illust-item' + (selectedIllust === il ? ' active' : '');
     div.innerHTML = '<img src="' + il.src + '" alt="' + il.name + '"><span>' + il.name + '</span>';
     div.addEventListener('click', function() {
       document.querySelectorAll('.illust-item').forEach(function(d) { d.classList.remove('active'); });
@@ -954,42 +1040,136 @@ function renderIllustGrid() {
   });
 }
 
+function toggleMoreIllusts() {
+  var grid = document.getElementById('illust-grid-more');
+  var btn = document.getElementById('btn-illust-expand');
+  illustExpanded = !illustExpanded;
+  if (illustExpanded) {
+    grid.style.display = 'grid';
+    btn.textContent = '收起更多配图 ↑';
+  } else {
+    grid.style.display = 'none';
+    btn.textContent = '展开更多配图 ↓';
+  }
+}
+
 // 初始化表单组件
 renderMoodSection();
 renderToggleGroup('attach-toggles', attachments, selectedAttachments);
 renderIllustGrid();
 
 /**
- * 日期自动填充 — 将当前日期转为中文格式
- * 如：二〇二六年 / 六月 / 十日
+ * 初始化日期下拉框 — 年/月/日三级联动，升序排列
+ * 2023年：11月28日 → 12月31日
+ * 2024-2025年：1月 → 6月13日
+ * 2026年：1月 → 今天（不超过6月13日）
  */
-function autoFillDate() {
+function initDateSelects() {
+  var digitMap = ['〇', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+  function yearToChinese(y) {
+    var s = '';
+    String(y).split('').forEach(function(ch) { s += digitMap[parseInt(ch)] || ch; });
+    return s + '年';
+  }
+
+  var monthNames = ['', '一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+
+  function daysInMonth(y, m) {
+    return new Date(y, m, 0).getDate();
+  }
+
   var now = new Date();
-  var y = now.getFullYear();
-  var m = now.getMonth() + 1;
-  var d = now.getDate();
-
-  // 年份转中文：2026 → 二〇二六年
-  var digits = ['〇', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
-  var yearStr = '';
-  String(y).split('').forEach(function(ch) { yearStr += digits[parseInt(ch)] || ch; });
-  yearStr += '年';
-
-  // 月份转中文：6 → 六月
-  var months = ['', '一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
-  var monthStr = months[m] || m + '月';
-
-  // 日期转中文：10 → 十日
-  var dayStr = toChineseNum(d) + '日';
+  var todayYear = now.getFullYear();
+  var todayMonth = now.getMonth() + 1;
+  var todayDay = now.getDate();
 
   var yearEl = document.getElementById('date-year');
   var monthEl = document.getElementById('date-month');
   var dayEl = document.getElementById('date-day');
-  if (yearEl) yearEl.value = yearStr;
-  if (monthEl) monthEl.value = monthStr;
-  if (dayEl) dayEl.value = dayStr;
+
+  // 填充年份 2023 → 今年
+  for (var y = 2023; y <= todayYear; y++) {
+    var opt = document.createElement('option');
+    opt.value = yearToChinese(y);
+    opt.textContent = yearToChinese(y);
+    opt.setAttribute('data-year', y);
+    yearEl.appendChild(opt);
+  }
+  yearEl.value = yearToChinese(todayYear);
+
+  function getSelectedYear() {
+    var opt = yearEl.options[yearEl.selectedIndex];
+    return opt ? parseInt(opt.getAttribute('data-year')) || todayYear : todayYear;
+  }
+
+  function populateMonths() {
+    monthEl.innerHTML = '';
+    var selYear = getSelectedYear();
+
+    var startM, endM;
+    if (selYear === 2023) {
+      startM = 11;
+      endM = 12;
+    } else if (selYear === todayYear) {
+      startM = 1;
+      endM = todayMonth;
+    } else {
+      startM = 1;
+      endM = 12;
+    }
+
+    for (var m = startM; m <= endM; m++) {
+      var opt = document.createElement('option');
+      opt.value = monthNames[m];
+      opt.textContent = monthNames[m];
+      monthEl.appendChild(opt);
+    }
+    if (selYear === todayYear) {
+      monthEl.value = monthNames[todayMonth];
+    }
+    populateDays();
+  }
+
+  function populateDays() {
+    dayEl.innerHTML = '';
+    var selYear = getSelectedYear();
+    var selMonth = monthNames.indexOf(monthEl.value);
+    if (selMonth < 1) selMonth = 1;
+
+    var startD = 1;
+    var endD = daysInMonth(selYear, selMonth);
+
+    if (selYear === 2023 && selMonth === 11) {
+      startD = 28;
+    }
+    if (selYear === todayYear && selMonth === todayMonth) {
+      endD = todayDay;
+    }
+
+    for (var d = startD; d <= endD; d++) {
+      var opt = document.createElement('option');
+      opt.value = toChineseNum(d) + '日';
+      opt.textContent = toChineseNum(d) + '日';
+      dayEl.appendChild(opt);
+    }
+    if (selYear === todayYear && selMonth === todayMonth) {
+      dayEl.value = toChineseNum(todayDay) + '日';
+    }
+  }
+
+  yearEl.addEventListener('change', function() {
+    populateMonths();
+    updateLivePreview();
+  });
+  monthEl.addEventListener('change', function() {
+    populateDays();
+    updateLivePreview();
+  });
+  dayEl.addEventListener('change', updateLivePreview);
+
+  populateMonths();
 }
-autoFillDate();
+initDateSelects();
 
 /**
  * 移动端点击"預覽信紙"按钮滚动到预览区
@@ -1124,7 +1304,7 @@ function updateLivePreview() {
   }
 });
 // 日期输入也触发预览更新
-['date-year', 'date-month', 'date-day', 'attach-custom'].forEach(function(id) {
+['attach-custom'].forEach(function(id) {
   var el = document.getElementById(id);
   if (el) {
     el.addEventListener('input', updateLivePreview);

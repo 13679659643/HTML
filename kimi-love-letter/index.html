@@ -113,10 +113,19 @@
 
 
 <!-- ===== Hall 1: 初遇 ===== -->
-<!-- 展品信件图 + 铭牌（标题/描述/引用/出处）-->
+<!-- 双图展品：信 + 信封，点击放大 -->
 <div id="page-hall-1" class="page">
   <div class="hall-page">
-    <div class="exhibit-img"><img src="exhibits/letters/letter-1.jpg" alt="我们的初遇"></div>
+    <div class="exhibit-duo">
+      <div class="exhibit-duo-item" onclick="openFirstMeetLightbox(0)">
+        <img src="exhibits/FirstMeeting/FirstMeetingLetter.png" alt="信">
+        <span class="exhibit-duo-label">信</span>
+      </div>
+      <div class="exhibit-duo-item" onclick="openFirstMeetLightbox(1)">
+        <img src="exhibits/FirstMeeting/FirstEncounterEnvelope.png" alt="信封">
+        <span class="exhibit-duo-label">信封</span>
+      </div>
+    </div>
     <div class="plaque">
       <div class="plaque-line"></div>
       <div class="plaque-inner">
@@ -281,9 +290,10 @@
       </div>
       <!-- 心意类别 -->
       <div class="form-group">
-        <label class="form-label">心意类别<span class="form-hint">（至多选五句，已选 <span id="mood-count">0</span>/5）</span></label>
+        <label class="form-label">心意类别<span class="form-hint">（至多选十句，已选 <span id="mood-count">0</span>/10）</span></label>
         <div class="mood-tabs" id="mood-tabs"></div>
         <div class="mood-sentences" id="mood-sentences"></div>
+        <button class="btn-reset-form" onclick="resetForm()" title="重置信纸内容">↺ 重置</button>
       </div>
       <!-- 随信附上 -->
       <div class="form-group">
@@ -295,15 +305,17 @@
       <div class="form-group">
         <label class="form-label">日期</label>
         <div class="form-row form-row-3col">
-          <input class="form-input" id="date-year" placeholder="二〇二六年">
-          <input class="form-input" id="date-month" placeholder="六月">
-          <input class="form-input" id="date-day" placeholder="十日">
+          <select class="form-select" id="date-year"></select>
+          <select class="form-select" id="date-month"></select>
+          <select class="form-select" id="date-day"></select>
         </div>
       </div>
       <!-- 配图 -->
       <div class="form-group">
         <label class="form-label">配图</label>
         <div class="illust-grid" id="illust-grid"></div>
+        <button class="btn-illust-expand" id="btn-illust-expand" onclick="toggleMoreIllusts()">展开更多配图 ↓</button>
+        <div class="illust-grid illust-grid-more" id="illust-grid-more" style="display:none;"></div>
       </div>
       <!-- 移动端预览按钮（桌面端隐藏） -->
       <button class="preview-btn-mobile" onclick="scrollToPreview()">预览信纸 ↓</button>
