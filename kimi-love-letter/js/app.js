@@ -201,14 +201,14 @@ function toggleHeroSound() {
  * 用于渲染画廊缩略图和灯箱大图
  */
 var letterData = [
-  { src: 'exhibits/letters/letter-1.jpg', alt: '第一封：相识那天' },
-  { src: 'exhibits/letters/letter-2.jpg', alt: '第二封：心动瞬间' },
-  { src: 'exhibits/letters/letter-3.jpg', alt: '第三封：思念成疾' },
-  { src: 'exhibits/letters/letter-4.jpg', alt: '第四封：分别不舍' },
-  { src: 'exhibits/letters/letter-5.jpg', alt: '第五封：重逢欢喜' },
-  { src: 'exhibits/letters/letter-6.jpg', alt: '第六封：日常温柔' },
-  { src: 'exhibits/letters/letter-7.jpg', alt: '第七封：未来期许' },
-  { src: 'exhibits/letters/letter-8.jpg', alt: '第八封：三周年寄语' }
+  { src: 'exhibits/2 Short Paper, Long Feelings/初雪.png', name: '初雪' },
+  { src: 'exhibits/2 Short Paper, Long Feelings/朝暮.png', name: '朝暮' },
+  { src: 'exhibits/2 Short Paper, Long Feelings/棱角.png', name: '棱角' },
+  { src: 'exhibits/2 Short Paper, Long Feelings/偏爱.png', name: '偏爱' },
+  { src: 'exhibits/2 Short Paper, Long Feelings/同频.png', name: '同频' },
+  { src: 'exhibits/2 Short Paper, Long Feelings/时间.png', name: '时间' },
+  { src: 'exhibits/2 Short Paper, Long Feelings/蓝图.png', name: '蓝图' },
+  { src: 'exhibits/2 Short Paper, Long Feelings/归处.png', name: '归处' }
 ];
 
 var firstMeetData = [
@@ -216,13 +216,13 @@ var firstMeetData = [
   { src: 'exhibits/FirstMeeting/FirstEncounterEnvelope.png', alt: '信封' }
 ];
 
-/** 渲染画廊网格 — 8张可点击的信件缩略图 */
+/** 渲染画廊网格 — 8张可点击的缩略图 + 主题标签 */
 (function renderGallery() {
   var galleryGrid = document.getElementById('gallery-grid');
   letterData.forEach(function(letter, i) {
     var div = document.createElement('div');
     div.className = 'gallery-item';
-    div.innerHTML = '<img src="' + letter.src + '" alt="' + letter.alt + '">';
+    div.innerHTML = '<img src="' + letter.src + '" alt="' + letter.name + '"><span class="gallery-item-label">' + letter.name + '</span>';
     div.addEventListener('click', function() { openLightbox(i); });
     galleryGrid.appendChild(div);
   });
@@ -791,6 +791,36 @@ var moreIllusts = [
 
 var illustExpanded = false;
 
+/** 收信人身份 → 问候语 */
+var receiverGreeting = {
+  '女朋友': '展信欢颜',
+  '老婆': '见字如面',
+  '欢欢': '见字如晤',
+  '小欢': '展信舒颜',
+  '欢欢宝贝': '展信欢颜',
+  '亲爱的': '见字如面',
+  '小仙女': '见字如面',
+  '我的唯一': '展信欢颜',
+  '我的全世界': '展信欢颜',
+  '恋人': '展信欢颜',
+  '最好的朋友': '见字如面'
+};
+
+/** 寄信人身份 → 落款 */
+var senderSignOff = {
+  '男朋友': '敬上',
+  '老公': '手书',
+  '我': '敬上',
+  '笨蛋': '敬上',
+  '傻瓜': '敬上',
+  '亲爱的': '敬上',
+  '宝贝': '敬上',
+  '你的': '敬上',
+  '专属': '敬上',
+  '恋人': '敬上',
+  '最好的朋友': '敬上'
+};
+
 /** 当前选中的句子（跨分类汇总） */
 var selectedSentences = [];
 
@@ -870,7 +900,7 @@ function renderSentences() {
   customRow.innerHTML =
     '<span class="mood-custom-trigger">+ 自定义心意</span>' +
     '<div class="mood-custom-input-wrap" style="display:none;">' +
-      '<input class="mood-custom-input" placeholder="输入你的心意..." maxlength="30">' +
+      '<input class="mood-custom-input" placeholder="输入你的心意..." maxlength="500">' +
       '<button class="mood-custom-confirm">✓</button>' +
       '<button class="mood-custom-cancel">✕</button>' +
     '</div>';
@@ -1226,7 +1256,7 @@ function updateLivePreview() {
   var customAttach = document.getElementById('attach-custom') ? document.getElementById('attach-custom').value : '';
 
   // ===== 信纸预览（横排，红色边框，手写体） =====
-  var greeting = (rRole ? rRole + ' ' : '') + rName + '，展信欢颜。';
+  var greeting = (rRole ? rRole + ' ' : '') + rName + '，' + (receiverGreeting[rRole] || '展信欢颜') + '。';
 
   // 使用选中的句子作为正文
   var bodyHTML = '';
@@ -1245,7 +1275,7 @@ function updateLivePreview() {
     attachText = '<span class="letter-body">随信附上 ' + allAttach.join('、') + '，聊表心意。</span>';
   }
 
-  var signText = (sRole ? sRole + ' ' : '') + sName + ' 敬上';
+  var signText = (sRole ? sRole + ' ' : '') + sName + ' ' + (senderSignOff[sRole] || '敬上');
 
   // 配图水印（灰度半透明，贴在信纸底部）
   var illustWatermark = selectedIllust ? '<img class="letter-paper-illust" src="' + selectedIllust.src + '" alt="' + selectedIllust.name + '">' : '';
@@ -1366,7 +1396,7 @@ function collectLetterData() {
   var rRole = receiverRole !== '选择身份' ? receiverRole : '';
 
   /* 问候语 */
-  var greeting = (rRole ? rRole + ' ' : '') + rName + '，展信欢颜。';
+  var greeting = (rRole ? rRole + ' ' : '') + rName + '，' + (receiverGreeting[rRole] || '展信欢颜') + '。';
 
   /* 正文段落（选中的心意句子，默认一句） */
   var bodies = selectedSentences.length > 0 ? selectedSentences.slice() : ['好久不见，甚是想念。'];
@@ -1380,7 +1410,7 @@ function collectLetterData() {
   }
 
   /* 署名 */
-  var signText = (sRole ? sRole + ' ' : '') + sName + ' 敬上';
+  var signText = (sRole ? sRole + ' ' : '') + sName + ' ' + (senderSignOff[sRole] || '敬上');
 
   /* 日期 */
   var dateStr = dateYear + dateMonth + dateDay;
