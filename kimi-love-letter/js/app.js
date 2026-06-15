@@ -146,6 +146,42 @@ function toggleHeroSound() {
   if (!video) return;
 
   var isMobile = /Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent);
+  var heroBg = document.querySelector('.hero-bg');
+
+  /**
+   * 移动端视频 cover — 精确尺寸 + object-fit:fill 方案
+   *
+   * 原理：计算容器与视频宽高比，设置精确px尺寸覆盖容器，
+   * 同时用 object-fit:fill 确保视频内容填满元素框。
+   * cover尺寸与视频比例差异 < 0.01%，fill不会造成可见变形。
+   * 不依赖 video.videoWidth，使用已知宽高比兜底。
+   */
+  var KNOWN_VIDEO_W = 1440;
+  var KNOWN_VIDEO_H = 1080;
+
+  function isNarrowScreen() {
+    return window.innerWidth <= 768;
+  }
+
+  function resizeCoverVideo() {
+    if (!heroBg) return;
+    if (!isNarrowScreen()) {
+      // 宽屏时清除内联样式，让 CSS object-fit:cover 接管
+      video.style.width = '';
+      video.style.height = '';
+      video.style.objectFit = '';
+      return;
+    }
+    var cw = heroBg.offsetWidth;
+    var ch = heroBg.offsetHeight;
+    if (!cw || !ch) return;
+    var vw = video.videoWidth || KNOWN_VIDEO_W;
+    var vh = video.videoHeight || KNOWN_VIDEO_H;
+    var scale = Math.max(cw / vw, ch / vh);
+    video.style.width = Math.ceil(vw * scale) + 'px';
+    video.style.height = Math.ceil(vh * scale) + 'px';
+    video.style.objectFit = 'fill';
+  }
 
   video.addEventListener('error', function() {
     video.style.display = 'none';
@@ -157,8 +193,14 @@ function toggleHeroSound() {
     }
   }, 8000);
 
+  video.addEventListener('loadedmetadata', function() {
+    clearTimeout(loadTimeout);
+    resizeCoverVideo();
+  });
+
   video.addEventListener('loadeddata', function() {
     clearTimeout(loadTimeout);
+    resizeCoverVideo();
     if (isMobile) {
       video.play().catch(function() {
         video.style.display = 'none';
@@ -166,8 +208,26 @@ function toggleHeroSound() {
     }
   });
 
+  // 立即执行 + 轮询 + 事件触发
+  resizeCoverVideo();
+  var pollCount = 0;
+  var pollTimer = setInterval(function() {
+    pollCount++;
+    if (pollCount > 30) { clearInterval(pollTimer); return; }
+    resizeCoverVideo();
+  }, 300);
+  video.addEventListener('playing', resizeCoverVideo);
+  video.addEventListener('timeupdate', function onTime() {
+    resizeCoverVideo();
+    video.removeEventListener('timeupdate', onTime);
+  });
+  window.addEventListener('resize', resizeCoverVideo);
+  window.addEventListener('orientationchange', function() {
+    setTimeout(resizeCoverVideo, 200);
+  });
+
   if (isMobile) {
-    video.setAttribute('preload', 'metadata');
+    video.setAttribute('preload', 'auto');
     video.setAttribute('playsinline', '');
   }
 
