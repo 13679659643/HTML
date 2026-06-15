@@ -227,7 +227,6 @@ function toggleHeroSound() {
   });
 
   if (isMobile) {
-    video.setAttribute('preload', 'auto');
     video.setAttribute('playsinline', '');
   }
 
