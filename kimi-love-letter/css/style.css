@@ -313,6 +313,39 @@ a { text-decoration: none; color: inherit; }
   }
 }
 
+/* 视频预加载进度环 */
+.hero-video-progress {
+  position: absolute;
+  top: 72px;
+  right: 72px;
+  z-index: 3;
+  width: 32px;
+  height: 32px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+.hero-video-progress.loading {
+  opacity: 1;
+}
+.hero-video-progress svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 4px rgba(0,0,0,0.4));
+}
+.hero-video-progress .progress-fill {
+  transition: stroke-dashoffset 0.25s ease;
+}
+
+@media (max-width: 700px) {
+  .hero-video-progress {
+    top: 64px;
+    right: 52px;
+    width: 28px;
+    height: 28px;
+  }
+}
+
 /* 序厅以下内容延迟渲染，加速首屏 */
 .intro-section,
 .cards-section,
