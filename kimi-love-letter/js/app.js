@@ -147,17 +147,21 @@ function toggleHeroSound() {
 
   var isMobile = /Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent);
   var heroBg = document.querySelector('.hero-bg');
+  var progressRing = document.getElementById('hero-video-progress');
+  var progressFill = document.getElementById('progress-fill');
 
   /**
-   * 移动端视频 cover — 精确尺寸 + object-fit:fill 方案
+   * 渐进式视频加载方案：
+   * 1. 默认播放小视频（hero-01.mp4），首屏秒开
+   * 2. 后台 fetch 流式下载大视频（hero-1.mp4），实时更新进度环
+   * 3. 下载完成后无缝切换，保持播放位置
    *
-   * 原理：计算容器与视频宽高比，设置精确px尺寸覆盖容器，
-   * 同时用 object-fit:fill 确保视频内容填满元素框。
-   * cover尺寸与视频比例差异 < 0.01%，fill不会造成可见变形。
-   * 不依赖 video.videoWidth，使用已知宽高比兜底。
+   * 移动端 cover 方案：JS动态计算精确px尺寸 + object-fit:fill
+   * 已知大视频宽高比 1440:1080，小视频 loadedmetadata 后更新
    */
   var KNOWN_VIDEO_W = 1440;
   var KNOWN_VIDEO_H = 1080;
+  var LARGE_VIDEO_SRC = 'hero-1.mp4';
 
   function isNarrowScreen() {
     return window.innerWidth <= 768;
@@ -166,7 +170,6 @@ function toggleHeroSound() {
   function resizeCoverVideo() {
     if (!heroBg) return;
     if (!isNarrowScreen()) {
-      // 宽屏时清除内联样式，让 CSS object-fit:cover 接管
       video.style.width = '';
       video.style.height = '';
       video.style.objectFit = '';
@@ -183,8 +186,31 @@ function toggleHeroSound() {
     video.style.objectFit = 'fill';
   }
 
+  function setProgress(percent) {
+    if (progressFill) {
+      progressFill.setAttribute('stroke-dashoffset', String(100 - Math.min(percent, 100)));
+    }
+  }
+
+  function hideProgress() {
+    if (progressRing) progressRing.classList.remove('loading');
+  }
+
+  // ── 小视频就绪处理 ──
+  function handleVideoReady() {
+    if (video.videoWidth > 0) {
+      KNOWN_VIDEO_W = video.videoWidth;
+      KNOWN_VIDEO_H = video.videoHeight;
+    }
+    resizeCoverVideo();
+    if (isMobile) {
+      video.play().catch(function() {});
+    }
+  }
+
   video.addEventListener('error', function() {
     video.style.display = 'none';
+    hideProgress();
   });
 
   var loadTimeout = setTimeout(function() {
@@ -195,17 +221,12 @@ function toggleHeroSound() {
 
   video.addEventListener('loadedmetadata', function() {
     clearTimeout(loadTimeout);
-    resizeCoverVideo();
+    handleVideoReady();
   });
 
   video.addEventListener('loadeddata', function() {
     clearTimeout(loadTimeout);
-    resizeCoverVideo();
-    if (isMobile) {
-      video.play().catch(function() {
-        video.style.display = 'none';
-      });
-    }
+    handleVideoReady();
   });
 
   // 立即执行 + 轮询 + 事件触发
@@ -230,6 +251,94 @@ function toggleHeroSound() {
     video.setAttribute('playsinline', '');
   }
 
+  // ── 后台预加载大视频 + 进度跟踪 + 无缝切换 ──
+  function preloadLargeVideo() {
+    // 显示进度环
+    if (progressRing) progressRing.classList.add('loading');
+
+    // 延迟 1 秒再开始下载，让小视频先稳定播放
+    setTimeout(function() {
+      if (!window.fetch || !window.ReadableStream) {
+        preloadFallback();
+        return;
+      }
+
+      fetch(LARGE_VIDEO_SRC).then(function(response) {
+        if (!response.ok || !response.body) {
+          preloadFallback();
+          return;
+        }
+
+        var contentLength = parseInt(response.headers.get('Content-Length') || '0', 10);
+        if (!contentLength) {
+          preloadFallback();
+          return;
+        }
+
+        var reader = response.body.getReader();
+        var received = 0;
+        var chunks = [];
+
+        function read() {
+          reader.read().then(function(result) {
+            if (result.done) {
+              swapVideo(new Blob(chunks, { type: 'video/mp4' }));
+              return;
+            }
+            chunks.push(result.value);
+            received += result.value.length;
+            setProgress((received / contentLength) * 100);
+            read();
+          }).catch(function() {
+            hideProgress();
+          });
+        }
+
+        read();
+      }).catch(function() {
+        hideProgress();
+      });
+    }, 1000);
+  }
+
+  // 不支持流式读取时的备用方案
+  function preloadFallback() {
+    fetch(LARGE_VIDEO_SRC)
+      .then(function(r) { return r.blob(); })
+      .then(function(blob) { swapVideo(blob); })
+      .catch(function() { hideProgress(); });
+  }
+
+  // 无缝切换到大视频
+  function swapVideo(blob) {
+    var blobUrl = URL.createObjectURL(blob);
+    var currentTime = video.currentTime;
+    var wasPlaying = !video.paused;
+    var wasMuted = video.muted;
+
+    video.src = blobUrl;
+    video.load();
+
+    video.addEventListener('loadeddata', function onSwap() {
+      video.removeEventListener('loadeddata', onSwap);
+      try { video.currentTime = currentTime; } catch(e) {}
+      video.muted = wasMuted;
+      if (wasPlaying) {
+        video.play().catch(function() {});
+      }
+      // 大视频尺寸已知，更新 cover 计算
+      if (video.videoWidth > 0) {
+        KNOWN_VIDEO_W = video.videoWidth;
+        KNOWN_VIDEO_H = video.videoHeight;
+      }
+      resizeCoverVideo();
+      hideProgress();
+    });
+  }
+
+  preloadLargeVideo();
+
+  // ── 生命周期事件 ──
   window.addEventListener('pageshow', function(e) {
     if (e.persisted && video.paused) {
       video.play().catch(function() {});
