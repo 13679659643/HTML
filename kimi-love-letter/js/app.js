@@ -21,9 +21,12 @@
  * - 竖排信件内容使用writing-mode: vertical-rl实现
  * - 照片数据为程序生成的虚构数据（100张）
  * 
- * @version 3.0
+ * @version 3.0.1
  * @author 辜涛
  */
+
+// 控制台输出版本号，方便调试确认部署版本
+console.log('%c紙短情長 v' + (typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'unknown'), 'color:#b34a3a;font-size:14px;font-weight:bold');
 
 
 /* ============================================================
@@ -145,6 +148,7 @@ function toggleHeroSound() {
   var video = document.getElementById('hero-video');
   if (!video) return;
 
+  var isMobile = /Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent);
   var heroBg = document.querySelector('.hero-bg');
   var progressRing = document.getElementById('hero-video-progress');
   var progressFill = document.getElementById('progress-fill');
@@ -259,25 +263,57 @@ function toggleHeroSound() {
 
     var blobUrl = URL.createObjectURL(blob);
     var currentTime = video.currentTime;
-    var wasMuted = video.muted;
 
     video.style.transition = 'opacity 0.6s ease';
     video.style.opacity = '0';
 
     setTimeout(function() {
+      // 移动端：确保 muted + playsinline，否则 autoplay 会被拒绝
+      if (isMobile) {
+        video.muted = true;
+        video.setAttribute('playsinline', '');
+      }
+
       video.src = blobUrl;
       video.load();
 
       video.addEventListener('loadeddata', function onSwap() {
         video.removeEventListener('loadeddata', onSwap);
         try { video.currentTime = currentTime; } catch(e) {}
-        video.muted = wasMuted;
+        video.muted = true; // 确保 muted，浏览器才允许自动播放
         video.style.display = '';
-        video.play().catch(function(){}); // muted 视频浏览器允许自动播放
-        requestAnimationFrame(function() { video.style.opacity = '1'; });
 
+        // 更新为大视频尺寸后重新计算 cover
         if (video.videoWidth > 0) { KNOWN_VIDEO_W = video.videoWidth; KNOWN_VIDEO_H = video.videoHeight; }
         resizeCoverVideo();
+
+        video.play().then(function() {
+          requestAnimationFrame(function() { video.style.opacity = '1'; });
+        }).catch(function() {
+          // 移动端 swap 后 play 可能被拒绝，在下次用户触摸时重试
+          if (isMobile) {
+            function retryPlay() {
+              video.play().then(function() {
+                requestAnimationFrame(function() { video.style.opacity = '1'; });
+                document.removeEventListener('touchstart', retryPlay);
+                document.removeEventListener('touchend', retryPlay);
+              }).catch(function(){});
+            }
+            document.addEventListener('touchstart', retryPlay, { once: true });
+            document.addEventListener('touchend', retryPlay, { once: true });
+          }
+        });
+
+        // swap 后加强轮询 cover 尺寸（移动端 videoWidth 可能延迟就绪）
+        var swapPoll = 0;
+        var swapTimer = setInterval(function() {
+          if (++swapPoll > 20) { clearInterval(swapTimer); return; }
+          if (video.videoWidth > 0) {
+            KNOWN_VIDEO_W = video.videoWidth;
+            KNOWN_VIDEO_H = video.videoHeight;
+          }
+          resizeCoverVideo();
+        }, 200);
 
         var remaining = Math.max(0, MIN_PROGRESS_MS - (Date.now() - preloadStart));
         setTimeout(hideProgress, remaining);
