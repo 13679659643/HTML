@@ -21,7 +21,7 @@
  * - 竖排信件内容使用writing-mode: vertical-rl实现
  * - 照片数据为程序生成的虚构数据（100张）
  * 
- * @version 3.0.2
+ * @version 3.0.3
  * @author 辜涛
  */
 
