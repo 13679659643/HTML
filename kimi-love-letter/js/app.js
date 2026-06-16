@@ -218,7 +218,23 @@ function toggleHeroSound() {
       document.addEventListener('touchstart', retryInitialPlay);
       document.addEventListener('touchend', retryInitialPlay);
       document.addEventListener('click', retryInitialPlay);
+      function wxInitialPlay() {
+        video.muted = true;
+        video.play().catch(function() {});
+      }
+      if (typeof WeixinJSBridge !== 'undefined') {
+        wxInitialPlay();
+      } else {
+        document.addEventListener('WeixinJSBridgeReady', wxInitialPlay, { once: true });
+      }
     });
+  });
+  video.addEventListener('canplay', function onCanPlay() {
+    video.removeEventListener('canplay', onCanPlay);
+    if (video.paused && !hasSwapped) {
+      video.muted = true;
+      video.play().catch(function() {});
+    }
   });
   video.addEventListener('playing', function() {
     if (video.style.opacity === '0') {
@@ -329,16 +345,27 @@ function toggleHeroSound() {
         video.play().then(function() {
           requestAnimationFrame(function() { video.style.opacity = '1'; });
         }).catch(function() {
+          requestAnimationFrame(function() { video.style.opacity = '1'; });
           function retrySwapPlay() {
             video.muted = true;
-            video.play().catch(function() {});
-            document.removeEventListener('touchstart', retrySwapPlay);
-            document.removeEventListener('touchend', retrySwapPlay);
-            document.removeEventListener('click', retrySwapPlay);
+            video.play().then(function() {
+              document.removeEventListener('touchstart', retrySwapPlay);
+              document.removeEventListener('touchend', retrySwapPlay);
+              document.removeEventListener('click', retrySwapPlay);
+            }).catch(function() {});
           }
           document.addEventListener('touchstart', retrySwapPlay);
           document.addEventListener('touchend', retrySwapPlay);
           document.addEventListener('click', retrySwapPlay);
+          function wxSwapPlay() {
+            video.muted = true;
+            video.play().catch(function() {});
+          }
+          if (typeof WeixinJSBridge !== 'undefined') {
+            wxSwapPlay();
+          } else {
+            document.addEventListener('WeixinJSBridgeReady', wxSwapPlay, { once: true });
+          }
         });
 
         // swap 后加强轮询 cover 尺寸（移动端 videoWidth 可能延迟就绪）
