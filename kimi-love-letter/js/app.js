@@ -21,7 +21,7 @@
  * - 竖排信件内容使用writing-mode: vertical-rl实现
  * - 照片数据为程序生成的虚构数据（100张）
  * 
- * @version 3.0.1
+ * @version 3.0.2
  * @author 辜涛
  */
 
@@ -157,7 +157,7 @@ function toggleHeroSound() {
   // 渐进式加载：小视频首屏秒开 → 后台 fetch 大视频 → 进度环跟踪 → 淡入切换
   var KNOWN_VIDEO_W = 1440; // 大视频宽高比兜底值（loadedmetadata 后更新）
   var KNOWN_VIDEO_H = 1080;
-  var LARGE_VIDEO_SRC = 'hero-1.mp4';
+  var LARGE_VIDEO_SRC = isMobile ? 'exhibits/BackupVideo/hero-2.mp4' : 'exhibits/BackupVideo/hero-1.mp4';
   var MIN_PROGRESS_MS = 1500; // 进度环最少显示时长
 
   // 移动端 cover：计算精确px尺寸 + object-fit:fill，避免黑边
@@ -167,6 +167,12 @@ function toggleHeroSound() {
       video.style.width = '';
       video.style.height = '';
       video.style.objectFit = '';
+      return;
+    }
+    if (hasSwapped) {
+      video.style.width = '';
+      video.style.height = '';
+      video.style.objectFit = 'cover';
       return;
     }
     var cw = heroBg.offsetWidth, ch = heroBg.offsetHeight;
