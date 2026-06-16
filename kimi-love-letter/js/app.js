@@ -193,7 +193,10 @@ function toggleHeroSound() {
   }
 
   function hideProgress() {
-    if (progressRing) progressRing.classList.remove('loading');
+    if (progressRing) {
+      progressRing.classList.remove('loading');
+      progressRing.classList.remove('indeterminate');
+    }
   }
 
   // ── 视频就绪处理（仅在未切换时生效）──
@@ -247,25 +250,33 @@ function toggleHeroSound() {
   }
 
   // ── 后台预加载大视频 + 进度跟踪 + 无缝切换 ──
+  var preloadStart = 0;
+  var MIN_PROGRESS_MS = 1500; // 进度环最少显示时间
+
   function preloadLargeVideo() {
+    preloadStart = Date.now();
     if (progressRing) progressRing.classList.add('loading');
 
-    // 延迟 1 秒再开始下载，让小视频先稳定播放
+    // 延迟 500ms 再开始下载，让小视频先稳定播放
     setTimeout(function() {
-      if (!window.fetch || !window.ReadableStream) {
+      if (!window.fetch) {
         preloadFallback();
         return;
       }
 
       fetch(LARGE_VIDEO_SRC).then(function(response) {
-        if (!response.ok || !response.body) {
+        if (!response.ok) {
           preloadFallback();
           return;
         }
 
         var contentLength = parseInt(response.headers.get('Content-Length') || '0', 10);
-        if (!contentLength) {
-          preloadFallback();
+
+        // 无 Content-Length（如 file:// 协议）→ 用旋转动画代替进度
+        if (!contentLength || !response.body) {
+          if (progressRing) progressRing.classList.add('indeterminate');
+          response.blob().then(function(blob) { swapVideo(blob); })
+            .catch(function() { hideProgress(); });
           return;
         }
 
@@ -292,11 +303,12 @@ function toggleHeroSound() {
       }).catch(function() {
         hideProgress();
       });
-    }, 1000);
+    }, 500);
   }
 
-  // 不支持流式读取时的备用方案
+  // 不支持 fetch 时的备用方案
   function preloadFallback() {
+    if (progressRing) progressRing.classList.add('indeterminate');
     fetch(LARGE_VIDEO_SRC)
       .then(function(r) { return r.blob(); })
       .then(function(blob) { swapVideo(blob); })
@@ -337,7 +349,12 @@ function toggleHeroSound() {
           KNOWN_VIDEO_H = video.videoHeight;
         }
         resizeCoverVideo();
-        hideProgress();
+        // 确保进度环至少显示 MIN_PROGRESS_MS
+        var elapsed = Date.now() - preloadStart;
+        var remaining = Math.max(0, MIN_PROGRESS_MS - elapsed);
+        setTimeout(function() {
+          hideProgress();
+        }, remaining);
         // 过渡完成后移除 transition
         setTimeout(function() {
           video.style.transition = '';
