@@ -203,9 +203,28 @@ function toggleHeroSound() {
     resizeCoverVideo();
   }
 
-  video.addEventListener('error', function() { video.style.display = 'none'; hideProgress(); });
+  video.addEventListener('error', function() { hideProgress(); });
   video.addEventListener('loadedmetadata', handleVideoReady);
-  video.addEventListener('loadeddata', function() { handleVideoReady(); video.play().catch(function(){}); });
+  video.addEventListener('loadeddata', function() {
+    handleVideoReady();
+    video.play().catch(function() {
+      function retryInitialPlay() {
+        video.muted = true;
+        video.play().catch(function() {});
+        document.removeEventListener('touchstart', retryInitialPlay);
+        document.removeEventListener('touchend', retryInitialPlay);
+        document.removeEventListener('click', retryInitialPlay);
+      }
+      document.addEventListener('touchstart', retryInitialPlay);
+      document.addEventListener('touchend', retryInitialPlay);
+      document.addEventListener('click', retryInitialPlay);
+    });
+  });
+  video.addEventListener('playing', function() {
+    if (video.style.opacity === '0') {
+      requestAnimationFrame(function() { video.style.opacity = '1'; });
+    }
+  });
 
   // 轮询确保 cover 尺寸正确（视频元数据加载后可能晚于首屏渲染）
   resizeCoverVideo();
@@ -253,21 +272,32 @@ function toggleHeroSound() {
             read();
           }).catch(hideProgress);
         })();
-      }).catch(hideProgress);
+      }).catch(function() { preloadViaVideo(); });
     }, 500);
   }
 
   function preloadFallback() {
     if (progressRing) progressRing.classList.add('indeterminate');
-    fetch(LARGE_VIDEO_SRC).then(function(r) { return r.blob(); }).then(swapVideo).catch(hideProgress);
+    fetch(LARGE_VIDEO_SRC).then(function(r) { return r.blob(); }).then(swapVideo).catch(function() { preloadViaVideo(); });
   }
 
-  // 淡出小视频 → 切换源 → 强制播放 → 淡入大视频
-  function swapVideo(blob) {
+  function preloadViaVideo() {
+    if (hasSwapped) return;
+    if (progressRing) progressRing.classList.add('indeterminate');
+    var tempVideo = document.createElement('video');
+    tempVideo.preload = 'auto';
+    tempVideo.src = LARGE_VIDEO_SRC;
+    tempVideo.addEventListener('canplaythrough', function() {
+      swapVideo(LARGE_VIDEO_SRC);
+    });
+    tempVideo.addEventListener('error', hideProgress);
+  }
+
+  function swapVideo(blobOrSrc) {
     if (hasSwapped) return;
     hasSwapped = true;
 
-    var blobUrl = URL.createObjectURL(blob);
+    var newSrc = (typeof blobOrSrc === 'string') ? blobOrSrc : URL.createObjectURL(blobOrSrc);
     var currentTime = video.currentTime;
 
     video.style.transition = 'opacity 0.6s ease';
@@ -280,7 +310,10 @@ function toggleHeroSound() {
         video.setAttribute('playsinline', '');
       }
 
-      video.src = blobUrl;
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
+      video.src = newSrc;
       video.load();
 
       video.addEventListener('loadeddata', function onSwap() {
@@ -296,18 +329,16 @@ function toggleHeroSound() {
         video.play().then(function() {
           requestAnimationFrame(function() { video.style.opacity = '1'; });
         }).catch(function() {
-          // 移动端 swap 后 play 可能被拒绝，在下次用户触摸时重试
-          if (isMobile) {
-            function retryPlay() {
-              video.play().then(function() {
-                requestAnimationFrame(function() { video.style.opacity = '1'; });
-                document.removeEventListener('touchstart', retryPlay);
-                document.removeEventListener('touchend', retryPlay);
-              }).catch(function(){});
-            }
-            document.addEventListener('touchstart', retryPlay, { once: true });
-            document.addEventListener('touchend', retryPlay, { once: true });
+          function retrySwapPlay() {
+            video.muted = true;
+            video.play().catch(function() {});
+            document.removeEventListener('touchstart', retrySwapPlay);
+            document.removeEventListener('touchend', retrySwapPlay);
+            document.removeEventListener('click', retrySwapPlay);
           }
+          document.addEventListener('touchstart', retrySwapPlay);
+          document.addEventListener('touchend', retrySwapPlay);
+          document.addEventListener('click', retrySwapPlay);
         });
 
         // swap 后加强轮询 cover 尺寸（移动端 videoWidth 可能延迟就绪）
